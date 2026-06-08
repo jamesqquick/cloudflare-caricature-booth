@@ -74,135 +74,77 @@ app.get('/', async (c) => {
 					</h2>
 
 					<style>
-						@keyframes pipeline-pulse {
-							0%, 16% { opacity: 1; border-color: rgba(246,130,31,0.6); background: rgba(246,130,31,0.08); box-shadow: 0 0 24px rgba(246,130,31,0.15); }
-							20%, 100% { opacity: 0.5; border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.02); box-shadow: none; }
+						@keyframes pipe-glow {
+							0%, 14% { opacity: 1; border-color: rgba(246,130,31,0.6); background: rgba(246,130,31,0.08); box-shadow: 0 0 30px rgba(246,130,31,0.12); }
+							18%, 100% { opacity: 0.45; border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.02); box-shadow: none; }
 						}
-						@keyframes connector-fill {
-							0%, 16% { background: rgba(246,130,31,0.5); }
-							20%, 100% { background: rgba(255,255,255,0.1); }
+						@keyframes pipe-icon-pop {
+							0%, 14% { transform: scale(1.18); }
+							18%, 100% { transform: scale(1); }
 						}
-						@keyframes pipeline-label {
-							0%, 16% { color: rgba(246,130,31,1); }
-							20%, 100% { color: rgba(255,255,255,0.35); }
-						}
-						@keyframes pipeline-icon {
-							0%, 16% { transform: scale(1.15); }
-							20%, 100% { transform: scale(1); }
-						}
-						.pipe-step { animation: pipeline-pulse 9s infinite; transition: all 0.4s ease; }
-						.pipe-step .pipe-icon { animation: pipeline-icon 9s infinite; transition: transform 0.4s ease; }
-						.pipe-step .pipe-service { animation: pipeline-label 9s infinite; }
-						.pipe-connector { animation: connector-fill 9s infinite; }
-						.pipe-step:nth-child(1), .pipe-step:nth-child(1) .pipe-icon, .pipe-step:nth-child(1) .pipe-service, .pipe-step:nth-child(1) ~ .pipe-connector:nth-child(2) { animation-delay: 0s; }
-						.pipe-step:nth-child(3), .pipe-step:nth-child(3) .pipe-icon, .pipe-step:nth-child(3) .pipe-service, .pipe-connector:nth-child(4) { animation-delay: 1.5s; }
-						.pipe-step:nth-child(5), .pipe-step:nth-child(5) .pipe-icon, .pipe-step:nth-child(5) .pipe-service, .pipe-connector:nth-child(6) { animation-delay: 3s; }
-						.pipe-step:nth-child(7), .pipe-step:nth-child(7) .pipe-icon, .pipe-step:nth-child(7) .pipe-service, .pipe-connector:nth-child(8) { animation-delay: 4.5s; }
-						.pipe-step:nth-child(9), .pipe-step:nth-child(9) .pipe-icon, .pipe-step:nth-child(9) .pipe-service, .pipe-connector:nth-child(10) { animation-delay: 6s; }
-						.pipe-step:nth-child(11), .pipe-step:nth-child(11) .pipe-icon, .pipe-step:nth-child(11) .pipe-service { animation-delay: 7.5s; }
-
-						/* Vertical layout for mobile */
-						@media (max-width: 639px) {
-							.pipe-connector-h { display: none; }
-							.pipe-connector-v { display: block; }
-						}
-						@media (min-width: 640px) {
-							.pipe-connector-v { display: none; }
-						}
+						.pipe-card { animation: pipe-glow 9s infinite; transition: all 0.4s ease; }
+						.pipe-card .pipe-icon { animation: pipe-icon-pop 9s infinite; transition: transform 0.4s ease; }
+						.pipe-card:nth-child(1), .pipe-card:nth-child(1) .pipe-icon { animation-delay: 0s; }
+						.pipe-card:nth-child(2), .pipe-card:nth-child(2) .pipe-icon { animation-delay: 1.5s; }
+						.pipe-card:nth-child(3), .pipe-card:nth-child(3) .pipe-icon { animation-delay: 3s; }
+						.pipe-card:nth-child(4), .pipe-card:nth-child(4) .pipe-icon { animation-delay: 4.5s; }
+						.pipe-card:nth-child(5), .pipe-card:nth-child(5) .pipe-icon { animation-delay: 6s; }
+						.pipe-card:nth-child(6), .pipe-card:nth-child(6) .pipe-icon { animation-delay: 7.5s; }
 					</style>
 
-					<!-- Desktop: horizontal flow -->
-					<div class="hidden sm:flex items-center justify-center gap-0">
-						<div class="pipe-step flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-3 py-5 w-[150px] text-center">
-							<div class="pipe-icon text-2xl">📸</div>
-							<div class="text-xs font-semibold text-white/80">Upload</div>
-							<p class="pipe-service text-[10px] text-white/40 leading-tight">Selfie uploaded to <span class="text-cf-orange font-semibold">R2</span> object storage.</p>
+					<div class="grid sm:grid-cols-3 gap-4 sm:gap-6">
+						<div class="pipe-card rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+							<div class="flex items-center gap-3 mb-3">
+								<div class="pipe-icon text-2xl">📸</div>
+								<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 01</div>
+							</div>
+							<div class="text-lg font-semibold">Upload</div>
+							<p class="mt-2 text-sm text-white/60">Selfie captured and uploaded to <span class="text-cf-orange font-semibold">R2</span> object storage.</p>
 						</div>
-						<div class="pipe-connector h-[2px] w-4 rounded-full bg-white/10 shrink-0"></div>
-						<div class="pipe-step flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-3 py-5 w-[150px] text-center">
-							<div class="pipe-icon text-2xl">🛡️</div>
-							<div class="text-xs font-semibold text-white/80">Moderate</div>
-							<p class="pipe-service text-[10px] text-white/40 leading-tight">Photo screened for safety by <span class="text-cf-orange font-semibold">Workers AI</span>.</p>
+						<div class="pipe-card rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+							<div class="flex items-center gap-3 mb-3">
+								<div class="pipe-icon text-2xl">🛡️</div>
+								<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 02</div>
+							</div>
+							<div class="text-lg font-semibold">Moderate</div>
+							<p class="mt-2 text-sm text-white/60">Photo screened for safety by <span class="text-cf-orange font-semibold">Workers AI</span> using Llama 3.2 Vision.</p>
 						</div>
-						<div class="pipe-connector h-[2px] w-4 rounded-full bg-white/10 shrink-0"></div>
-						<div class="pipe-step flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-3 py-5 w-[150px] text-center">
-							<div class="pipe-icon text-2xl">🎨</div>
-							<div class="text-xs font-semibold text-white/80">Generate</div>
-							<p class="pipe-service text-[10px] text-white/40 leading-tight">Caricature created via a durable <span class="text-cf-orange font-semibold">Workflows</span> pipeline.</p>
+						<div class="pipe-card rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+							<div class="flex items-center gap-3 mb-3">
+								<div class="pipe-icon text-2xl">🎨</div>
+								<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 03</div>
+							</div>
+							<div class="text-lg font-semibold">Generate</div>
+							<p class="mt-2 text-sm text-white/60">Caricature created through a durable <span class="text-cf-orange font-semibold">Workflows</span> pipeline.</p>
 						</div>
-						<div class="pipe-connector h-[2px] w-4 rounded-full bg-white/10 shrink-0"></div>
-						<div class="pipe-step flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-3 py-5 w-[150px] text-center">
-							<div class="pipe-icon text-2xl">🖼️</div>
-							<div class="text-xs font-semibold text-white/80">Composite</div>
-							<p class="pipe-service text-[10px] text-white/40 leading-tight">Postcard assembled with <span class="text-cf-orange font-semibold">Cloudflare Images</span>.</p>
+						<div class="pipe-card rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+							<div class="flex items-center gap-3 mb-3">
+								<div class="pipe-icon text-2xl">🖼️</div>
+								<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 04</div>
+							</div>
+							<div class="text-lg font-semibold">Composite</div>
+							<p class="mt-2 text-sm text-white/60">Print-ready postcard assembled with <span class="text-cf-orange font-semibold">Cloudflare Images</span>.</p>
 						</div>
-						<div class="pipe-connector h-[2px] w-4 rounded-full bg-white/10 shrink-0"></div>
-						<div class="pipe-step flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-3 py-5 w-[150px] text-center">
-							<div class="pipe-icon text-2xl">💾</div>
-							<div class="text-xs font-semibold text-white/80">Store</div>
-							<p class="pipe-service text-[10px] text-white/40 leading-tight">Session saved to <span class="text-cf-orange font-semibold">D1</span> and images to <span class="text-cf-orange font-semibold">R2</span>.</p>
+						<div class="pipe-card rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+							<div class="flex items-center gap-3 mb-3">
+								<div class="pipe-icon text-2xl">💾</div>
+								<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 05</div>
+							</div>
+							<div class="text-lg font-semibold">Store</div>
+							<p class="mt-2 text-sm text-white/60">Session saved to <span class="text-cf-orange font-semibold">D1</span> and images persisted to <span class="text-cf-orange font-semibold">R2</span>.</p>
 						</div>
-						<div class="pipe-connector h-[2px] w-4 rounded-full bg-white/10 shrink-0"></div>
-						<div class="pipe-step flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-3 py-5 w-[150px] text-center">
-							<div class="pipe-icon text-2xl">🖨️</div>
-							<div class="text-xs font-semibold text-white/80">Deliver</div>
-							<p class="pipe-service text-[10px] text-white/40 leading-tight">Postcard printed on-site and sent via <span class="text-cf-orange font-semibold">Email</span>.</p>
+						<div class="pipe-card rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+							<div class="flex items-center gap-3 mb-3">
+								<div class="pipe-icon text-2xl">🖨️</div>
+								<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 06</div>
+							</div>
+							<div class="text-lg font-semibold">Deliver</div>
+							<p class="mt-2 text-sm text-white/60">Postcard printed on-site and digital copy sent via <span class="text-cf-orange font-semibold">Email</span>.</p>
 						</div>
 					</div>
 
-					<!-- Mobile: vertical flow -->
-					<div class="flex sm:hidden flex-col items-center gap-0">
-						<div class="pipe-step flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4 w-full max-w-xs">
-							<div class="pipe-icon text-2xl shrink-0">📸</div>
-							<div>
-								<div class="text-sm font-semibold text-white/80">Upload</div>
-								<p class="pipe-service text-xs text-white/40 mt-0.5">Selfie uploaded to <span class="text-cf-orange font-semibold">R2</span> object storage.</p>
-							</div>
-						</div>
-						<div class="pipe-connector w-[2px] h-4 rounded-full bg-white/10"></div>
-						<div class="pipe-step flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4 w-full max-w-xs">
-							<div class="pipe-icon text-2xl shrink-0">🛡️</div>
-							<div>
-								<div class="text-sm font-semibold text-white/80">Moderate</div>
-								<p class="pipe-service text-xs text-white/40 mt-0.5">Photo screened for safety by <span class="text-cf-orange font-semibold">Workers AI</span>.</p>
-							</div>
-						</div>
-						<div class="pipe-connector w-[2px] h-4 rounded-full bg-white/10"></div>
-						<div class="pipe-step flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4 w-full max-w-xs">
-							<div class="pipe-icon text-2xl shrink-0">🎨</div>
-							<div>
-								<div class="text-sm font-semibold text-white/80">Generate</div>
-								<p class="pipe-service text-xs text-white/40 mt-0.5">Caricature created via a durable <span class="text-cf-orange font-semibold">Workflows</span> pipeline.</p>
-							</div>
-						</div>
-						<div class="pipe-connector w-[2px] h-4 rounded-full bg-white/10"></div>
-						<div class="pipe-step flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4 w-full max-w-xs">
-							<div class="pipe-icon text-2xl shrink-0">🖼️</div>
-							<div>
-								<div class="text-sm font-semibold text-white/80">Composite</div>
-								<p class="pipe-service text-xs text-white/40 mt-0.5">Postcard assembled with <span class="text-cf-orange font-semibold">Cloudflare Images</span>.</p>
-							</div>
-						</div>
-						<div class="pipe-connector w-[2px] h-4 rounded-full bg-white/10"></div>
-						<div class="pipe-step flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4 w-full max-w-xs">
-							<div class="pipe-icon text-2xl shrink-0">💾</div>
-							<div>
-								<div class="text-sm font-semibold text-white/80">Store</div>
-								<p class="pipe-service text-xs text-white/40 mt-0.5">Session saved to <span class="text-cf-orange font-semibold">D1</span> and images to <span class="text-cf-orange font-semibold">R2</span>.</p>
-							</div>
-						</div>
-						<div class="pipe-connector w-[2px] h-4 rounded-full bg-white/10"></div>
-						<div class="pipe-step flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4 w-full max-w-xs">
-							<div class="pipe-icon text-2xl shrink-0">🖨️</div>
-							<div>
-								<div class="text-sm font-semibold text-white/80">Deliver</div>
-								<p class="pipe-service text-xs text-white/40 mt-0.5">Postcard printed on-site and sent via <span class="text-cf-orange font-semibold">Email</span>.</p>
-							</div>
-						</div>
-					</div>
-
-					<p class="text-center text-xs text-white/30 mt-6">
-						The full pipeline runs in ~30–90 seconds with real-time status via Durable Objects + WebSockets.
+					<p class="text-center text-xs text-white/30 mt-8">
+						The full pipeline runs in ~30–90 seconds with real-time status via <span class="text-white/50">Durable Objects</span> + WebSockets.
 					</p>
 				</section>
 
