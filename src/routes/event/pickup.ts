@@ -120,7 +120,8 @@ app.get('/p/:id', async (c) => {
 
 	const shareText = `Check out my AI-generated caricature from ${event.name}! Built end-to-end on @CloudflareDev`;
 	const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(pickupUrl)}`;
-	const linkedInShareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(pickupUrl)}`;
+	const linkedInText = `${shareText}\n\n${pickupUrl}`;
+	const linkedInShareUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(linkedInText)}`;
 
 	const completedLabel = row.completed_at
 		? new Date(row.completed_at * 1000).toLocaleString('en-US', {
