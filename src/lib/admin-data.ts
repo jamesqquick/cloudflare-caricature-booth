@@ -6,7 +6,7 @@
  * endpoint, so the two views never disagree on the same request.
  */
 
-const SESSIONS_LIMIT = 30;
+export const SESSIONS_PER_PAGE = 30;
 
 export interface AdminSessionRow {
 	sessionId: string;
@@ -56,8 +56,12 @@ interface RawSessionRow {
  * The LEFT JOIN uses a correlated subquery to pick exactly one print_jobs
  * row per session (the newest by created_at). SQLite is happy with this
  * shape; it's O(N) in the join because sessions is already limited to 30.
+ *
+ * Supports pagination via `page` (1-indexed). Returns `SESSIONS_PER_PAGE`
+ * rows per page.
  */
-export async function loadAdminSessions(env: Env): Promise<AdminSessionRow[]> {
+export async function loadAdminSessions(env: Env, page = 1): Promise<AdminSessionRow[]> {
+	const offset = (Math.max(1, page) - 1) * SESSIONS_PER_PAGE;
 	const { results } = await env.DB.prepare(
 		`SELECT
 			s.id,
@@ -79,15 +83,12 @@ export async function loadAdminSessions(env: Env): Promise<AdminSessionRow[]> {
 			   ORDER BY pj.created_at DESC LIMIT 1) AS print_job_id
 		 FROM sessions s
 		 ORDER BY s.created_at DESC
-		 LIMIT ?`,
+		 LIMIT ? OFFSET ?`,
 	)
-		.bind(SESSIONS_LIMIT)
+		.bind(SESSIONS_PER_PAGE, offset)
 		.all<RawSessionRow>();
 
 	return results.map<AdminSessionRow>((r) => {
-		// Only the workflow-measured pipeline_ms is meaningful. Legacy rows
-		// (created_at == completed_at) would compute to 0ms via wall-clock, so
-		// we show them as unknown (null → "—") rather than a misleading 0.
 		const pipelineMs = r.pipeline_ms;
 		return {
 			sessionId: r.id,
@@ -106,6 +107,120 @@ export async function loadAdminSessions(env: Env): Promise<AdminSessionRow[]> {
 			eventId: r.event_id,
 		};
 	});
+}
+
+/** Total session count — used for pagination page count. */
+export async function countAdminSessions(env: Env): Promise<number> {
+	const row = await env.DB.prepare('SELECT COUNT(*) AS cnt FROM sessions').first<{ cnt: number }>();
+	return row?.cnt ?? 0;
+}
+
+// ---------------------------------------------------------------------------
+// Session detail (single session with full data)
+// ---------------------------------------------------------------------------
+
+export interface AdminPrintJob {
+	id: string;
+	status: string;
+	sceneName: string;
+	createdAt: number | null;
+	printedAt: number | null;
+	errorMsg: string | null;
+}
+
+export interface AdminSessionDetail {
+	sessionId: string;
+	status: string;
+	sceneId: string | null;
+	sceneName: string | null;
+	createdAt: number | null;
+	completedAt: number | null;
+	pipelineDurationMs: number | null;
+	email: string | null;
+	selfieKey: string | null;
+	caricatureKey: string | null;
+	postcardKey: string | null;
+	errorMsg: string | null;
+	eventId: string | null;
+	workflowInstanceId: string | null;
+	printJobs: AdminPrintJob[];
+}
+
+interface RawDetailRow {
+	id: string;
+	status: string | null;
+	scene_id: string | null;
+	scene_name: string | null;
+	created_at: number | null;
+	completed_at: number | null;
+	pipeline_ms: number | null;
+	email: string | null;
+	selfie_key: string | null;
+	caricature_key: string | null;
+	postcard_key: string | null;
+	error_msg: string | null;
+	event_id: string | null;
+	workflow_instance_id: string | null;
+}
+
+interface RawPrintJobRow {
+	id: string;
+	status: string;
+	scene_name: string;
+	created_at: number | null;
+	printed_at: number | null;
+	error_msg: string | null;
+}
+
+/**
+ * Load full detail for a single session, including all print jobs.
+ * Returns null if the session doesn't exist.
+ */
+export async function loadAdminSession(env: Env, sessionId: string): Promise<AdminSessionDetail | null> {
+	const session = await env.DB.prepare(
+		`SELECT
+			id, status, scene_id, scene_name, created_at, completed_at,
+			pipeline_ms, email, selfie_key, caricature_key, postcard_key,
+			error_msg, event_id, workflow_instance_id
+		 FROM sessions WHERE id = ?`,
+	)
+		.bind(sessionId)
+		.first<RawDetailRow>();
+
+	if (!session) return null;
+
+	const { results: printJobs } = await env.DB.prepare(
+		`SELECT id, status, scene_name, created_at, printed_at, error_msg
+		 FROM print_jobs WHERE session_id = ?
+		 ORDER BY created_at DESC`,
+	)
+		.bind(sessionId)
+		.all<RawPrintJobRow>();
+
+	return {
+		sessionId: session.id,
+		status: session.status ?? 'pending',
+		sceneId: session.scene_id,
+		sceneName: session.scene_name,
+		createdAt: session.created_at,
+		completedAt: session.completed_at,
+		pipelineDurationMs: session.pipeline_ms,
+		email: session.email,
+		selfieKey: session.selfie_key,
+		caricatureKey: session.caricature_key,
+		postcardKey: session.postcard_key,
+		errorMsg: session.error_msg,
+		eventId: session.event_id,
+		workflowInstanceId: session.workflow_instance_id,
+		printJobs: printJobs.map((pj) => ({
+			id: pj.id,
+			status: pj.status,
+			sceneName: pj.scene_name,
+			createdAt: pj.created_at,
+			printedAt: pj.printed_at,
+			errorMsg: pj.error_msg,
+		})),
+	};
 }
 
 // ---------------------------------------------------------------------------

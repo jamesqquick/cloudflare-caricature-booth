@@ -166,4 +166,48 @@ app.delete('/api/admin/session/:id', async (c) => {
 	return c.json({ ok: true, sessionId: id, deleted });
 });
 
+/**
+ * Admin-only R2 image proxy with optional thumbnail resize.
+ * GET /api/admin/image?key=<r2Key>&w=<width>
+ *
+ * Constrained to `runs/` and `kiosk/` key prefixes, same as the event-scoped
+ * proxy. The optional `w` param uses the Cloudflare Images binding to resize
+ * on the fly — great for card grid thumbnails without extra R2 storage.
+ */
+app.get('/api/admin/image', async (c) => {
+	const key = c.req.query('key');
+	if (!key || (!key.startsWith('runs/') && !key.startsWith('kiosk/'))) {
+		return c.json({ error: 'invalid key' }, 400);
+	}
+
+	const obj = await c.env.BUCKET.get(key);
+	if (!obj) return c.json({ error: 'not found', key }, 404);
+
+	const wParam = c.req.query('w');
+	const width = wParam ? Math.min(Math.max(Number(wParam), 50), 1800) : null;
+
+	const headers: Record<string, string> = {
+		'cache-control': 'public, max-age=3600',
+	};
+
+	if (c.req.query('download')) {
+		const tail = key.split('/').pop() ?? 'image';
+		headers['content-disposition'] = `attachment; filename="caricature-${tail}"`;
+	}
+
+	// Resize via Cloudflare Images binding when width is requested
+	if (width && Number.isFinite(width)) {
+		const resized = await c.env.IMAGES
+			.input(obj.body as ReadableStream)
+			.transform({ width })
+			.output({ format: 'image/jpeg', quality: 80 });
+		headers['content-type'] = 'image/jpeg';
+		return new Response(resized.image(), { headers });
+	}
+
+	headers['content-type'] = obj.httpMetadata?.contentType ?? 'application/octet-stream';
+	headers['content-length'] = String(obj.size);
+	return new Response(obj.body, { headers });
+});
+
 export { app as adminSessionApiRoutes };

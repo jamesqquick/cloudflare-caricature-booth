@@ -23,6 +23,7 @@ import { adminEventEditorRoutes } from './routes/admin-event-editor';
 import { adminEventsApiRoutes } from './routes/admin-events-api';
 import { adminWatermarksApiRoutes } from './routes/admin-watermarks-api';
 import { adminScenesApiRoutes } from './routes/admin-scenes-api';
+import { adminSessionDetailRoutes } from './routes/admin-session-detail';
 
 // Event-scoped routes
 import { eventLandingRoutes } from './routes/event/landing';
@@ -77,6 +78,7 @@ app.route('/', adminEventEditorRoutes);
 app.route('/', adminEventsApiRoutes);
 app.route('/', adminWatermarksApiRoutes);
 app.route('/', adminScenesApiRoutes);
+app.route('/', adminSessionDetailRoutes);
 
 
 // ---------------------------------------------------------------------------
