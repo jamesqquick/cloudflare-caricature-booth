@@ -67,6 +67,145 @@ app.get('/', async (c) => {
 					</ol>
 				</section>
 
+				<!-- Animated pipeline -->
+				<section class="max-w-4xl mx-auto mt-20 sm:mt-28">
+					<h2 class="text-center text-xs uppercase tracking-[0.3em] text-white/40 mb-10">
+						Under the hood
+					</h2>
+
+					<style>
+						@keyframes pipeline-pulse {
+							0%, 16% { opacity: 1; border-color: rgba(246,130,31,0.6); background: rgba(246,130,31,0.08); box-shadow: 0 0 24px rgba(246,130,31,0.15); }
+							20%, 100% { opacity: 0.5; border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.02); box-shadow: none; }
+						}
+						@keyframes connector-fill {
+							0%, 16% { background: rgba(246,130,31,0.5); }
+							20%, 100% { background: rgba(255,255,255,0.1); }
+						}
+						@keyframes pipeline-label {
+							0%, 16% { color: rgba(246,130,31,1); }
+							20%, 100% { color: rgba(255,255,255,0.35); }
+						}
+						@keyframes pipeline-icon {
+							0%, 16% { transform: scale(1.15); }
+							20%, 100% { transform: scale(1); }
+						}
+						.pipe-step { animation: pipeline-pulse 9s infinite; transition: all 0.4s ease; }
+						.pipe-step .pipe-icon { animation: pipeline-icon 9s infinite; transition: transform 0.4s ease; }
+						.pipe-step .pipe-service { animation: pipeline-label 9s infinite; }
+						.pipe-connector { animation: connector-fill 9s infinite; }
+						.pipe-step:nth-child(1), .pipe-step:nth-child(1) .pipe-icon, .pipe-step:nth-child(1) .pipe-service, .pipe-step:nth-child(1) ~ .pipe-connector:nth-child(2) { animation-delay: 0s; }
+						.pipe-step:nth-child(3), .pipe-step:nth-child(3) .pipe-icon, .pipe-step:nth-child(3) .pipe-service, .pipe-connector:nth-child(4) { animation-delay: 1.5s; }
+						.pipe-step:nth-child(5), .pipe-step:nth-child(5) .pipe-icon, .pipe-step:nth-child(5) .pipe-service, .pipe-connector:nth-child(6) { animation-delay: 3s; }
+						.pipe-step:nth-child(7), .pipe-step:nth-child(7) .pipe-icon, .pipe-step:nth-child(7) .pipe-service, .pipe-connector:nth-child(8) { animation-delay: 4.5s; }
+						.pipe-step:nth-child(9), .pipe-step:nth-child(9) .pipe-icon, .pipe-step:nth-child(9) .pipe-service, .pipe-connector:nth-child(10) { animation-delay: 6s; }
+						.pipe-step:nth-child(11), .pipe-step:nth-child(11) .pipe-icon, .pipe-step:nth-child(11) .pipe-service { animation-delay: 7.5s; }
+
+						/* Vertical layout for mobile */
+						@media (max-width: 639px) {
+							.pipe-connector-h { display: none; }
+							.pipe-connector-v { display: block; }
+						}
+						@media (min-width: 640px) {
+							.pipe-connector-v { display: none; }
+						}
+					</style>
+
+					<!-- Desktop: horizontal flow -->
+					<div class="hidden sm:flex items-center justify-center gap-0">
+						<div class="pipe-step flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-5 w-[130px] text-center">
+							<div class="pipe-icon text-2xl">📸</div>
+							<div class="text-xs font-semibold text-white/80">Upload</div>
+							<div class="pipe-service text-[10px] font-mono tracking-wider text-white/35">R2</div>
+						</div>
+						<div class="pipe-connector h-[2px] w-6 rounded-full bg-white/10"></div>
+						<div class="pipe-step flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-5 w-[130px] text-center">
+							<div class="pipe-icon text-2xl">🛡️</div>
+							<div class="text-xs font-semibold text-white/80">Moderate</div>
+							<div class="pipe-service text-[10px] font-mono tracking-wider text-white/35">Workers AI</div>
+						</div>
+						<div class="pipe-connector h-[2px] w-6 rounded-full bg-white/10"></div>
+						<div class="pipe-step flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-5 w-[130px] text-center">
+							<div class="pipe-icon text-2xl">🎨</div>
+							<div class="text-xs font-semibold text-white/80">Generate</div>
+							<div class="pipe-service text-[10px] font-mono tracking-wider text-white/35">Workflows</div>
+						</div>
+						<div class="pipe-connector h-[2px] w-6 rounded-full bg-white/10"></div>
+						<div class="pipe-step flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-5 w-[130px] text-center">
+							<div class="pipe-icon text-2xl">🖼️</div>
+							<div class="text-xs font-semibold text-white/80">Composite</div>
+							<div class="pipe-service text-[10px] font-mono tracking-wider text-white/35">Images</div>
+						</div>
+						<div class="pipe-connector h-[2px] w-6 rounded-full bg-white/10"></div>
+						<div class="pipe-step flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-5 w-[130px] text-center">
+							<div class="pipe-icon text-2xl">💾</div>
+							<div class="text-xs font-semibold text-white/80">Store</div>
+							<div class="pipe-service text-[10px] font-mono tracking-wider text-white/35">D1 + R2</div>
+						</div>
+						<div class="pipe-connector h-[2px] w-6 rounded-full bg-white/10"></div>
+						<div class="pipe-step flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-5 w-[130px] text-center">
+							<div class="pipe-icon text-2xl">🖨️</div>
+							<div class="text-xs font-semibold text-white/80">Deliver</div>
+							<div class="pipe-service text-[10px] font-mono tracking-wider text-white/35">Print + Email</div>
+						</div>
+					</div>
+
+					<!-- Mobile: vertical flow -->
+					<div class="flex sm:hidden flex-col items-center gap-0">
+						<div class="pipe-step flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4 w-full max-w-xs">
+							<div class="pipe-icon text-2xl shrink-0">📸</div>
+							<div>
+								<div class="text-sm font-semibold text-white/80">Upload selfie</div>
+								<div class="pipe-service text-[10px] font-mono tracking-wider text-white/35">R2</div>
+							</div>
+						</div>
+						<div class="pipe-connector w-[2px] h-4 rounded-full bg-white/10"></div>
+						<div class="pipe-step flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4 w-full max-w-xs">
+							<div class="pipe-icon text-2xl shrink-0">🛡️</div>
+							<div>
+								<div class="text-sm font-semibold text-white/80">Moderate content</div>
+								<div class="pipe-service text-[10px] font-mono tracking-wider text-white/35">Workers AI</div>
+							</div>
+						</div>
+						<div class="pipe-connector w-[2px] h-4 rounded-full bg-white/10"></div>
+						<div class="pipe-step flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4 w-full max-w-xs">
+							<div class="pipe-icon text-2xl shrink-0">🎨</div>
+							<div>
+								<div class="text-sm font-semibold text-white/80">Generate caricature</div>
+								<div class="pipe-service text-[10px] font-mono tracking-wider text-white/35">Workflows</div>
+							</div>
+						</div>
+						<div class="pipe-connector w-[2px] h-4 rounded-full bg-white/10"></div>
+						<div class="pipe-step flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4 w-full max-w-xs">
+							<div class="pipe-icon text-2xl shrink-0">🖼️</div>
+							<div>
+								<div class="text-sm font-semibold text-white/80">Composite postcard</div>
+								<div class="pipe-service text-[10px] font-mono tracking-wider text-white/35">Images</div>
+							</div>
+						</div>
+						<div class="pipe-connector w-[2px] h-4 rounded-full bg-white/10"></div>
+						<div class="pipe-step flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4 w-full max-w-xs">
+							<div class="pipe-icon text-2xl shrink-0">💾</div>
+							<div>
+								<div class="text-sm font-semibold text-white/80">Store results</div>
+								<div class="pipe-service text-[10px] font-mono tracking-wider text-white/35">D1 + R2</div>
+							</div>
+						</div>
+						<div class="pipe-connector w-[2px] h-4 rounded-full bg-white/10"></div>
+						<div class="pipe-step flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4 w-full max-w-xs">
+							<div class="pipe-icon text-2xl shrink-0">🖨️</div>
+							<div>
+								<div class="text-sm font-semibold text-white/80">Deliver postcard</div>
+								<div class="pipe-service text-[10px] font-mono tracking-wider text-white/35">Print + Email</div>
+							</div>
+						</div>
+					</div>
+
+					<p class="text-center text-xs text-white/30 mt-6">
+						The full pipeline runs in ~30–90 seconds with real-time status via Durable Objects + WebSockets.
+					</p>
+				</section>
+
 				<!-- Built on Cloudflare -->
 				<section class="max-w-4xl mx-auto mt-20 sm:mt-24">
 					<h2 class="text-center text-xs uppercase tracking-[0.3em] text-white/40 mb-8">
