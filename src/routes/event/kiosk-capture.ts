@@ -35,6 +35,7 @@ app.get('/kiosk/capture', (c) => {
 							<div class="absolute inset-0 pointer-events-none flex items-center justify-center">
 								<div class="size-[78%] rounded-full border-2 border-white/30 mix-blend-screen"></div>
 							</div>
+							<div id="cap-flash" class="absolute inset-0 bg-white pointer-events-none z-20 opacity-0 hidden"></div>
 							<div id="cap-countdown" class="absolute inset-0 hidden flex items-center justify-center pointer-events-none z-10">
 								<span id="cap-countdown-num" class="text-[10rem] sm:text-[12rem] font-black text-white drop-shadow-[0_0_40px_rgba(255,255,255,0.5)] leading-none countdown-pop"></span>
 							</div>
@@ -83,6 +84,11 @@ app.get('/kiosk/capture', (c) => {
 				100% { opacity: 0.3; }
 			}
 			.countdown-pop { animation: countdown-pop 0.9s ease-out both; }
+			@keyframes shutter-flash {
+				0% { opacity: 0.95; }
+				100% { opacity: 0; }
+			}
+			.shutter-flash { animation: shutter-flash 0.35s ease-out both; }
 			</style>
 
 			<script>
@@ -105,6 +111,7 @@ app.get('/kiosk/capture', (c) => {
 				let countdownTimer = null;
 				const countdownEl = document.getElementById("cap-countdown");
 				const countdownNum = document.getElementById("cap-countdown-num");
+				const flashEl = document.getElementById("cap-flash");
 
 				function setOverlay(html) {
 					if (html === null) {
@@ -206,6 +213,14 @@ app.get('/kiosk/capture', (c) => {
 
 				function takePhoto() {
 					if (!video.videoWidth) return;
+					// Flash the screen
+					flashEl.classList.remove("hidden", "shutter-flash");
+					void flashEl.offsetWidth;
+					flashEl.classList.add("shutter-flash");
+					flashEl.addEventListener("animationend", function () {
+						flashEl.classList.add("hidden");
+						flashEl.classList.remove("shutter-flash");
+					}, { once: true });
 					const canvas = document.createElement("canvas");
 					canvas.width = video.videoWidth;
 					canvas.height = video.videoHeight;
