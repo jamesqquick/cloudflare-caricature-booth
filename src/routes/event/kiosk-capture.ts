@@ -35,6 +35,10 @@ app.get('/kiosk/capture', (c) => {
 							<div class="absolute inset-0 pointer-events-none flex items-center justify-center">
 								<div class="size-[78%] rounded-full border-2 border-white/30 mix-blend-screen"></div>
 							</div>
+							<div id="cap-flash" class="absolute inset-0 bg-white pointer-events-none z-20 opacity-0 hidden"></div>
+							<div id="cap-countdown" class="absolute inset-0 hidden flex items-center justify-center pointer-events-none z-10">
+								<span id="cap-countdown-num" class="text-[10rem] sm:text-[12rem] font-black text-white drop-shadow-[0_0_40px_rgba(255,255,255,0.5)] leading-none countdown-pop"></span>
+							</div>
 							<div id="cap-overlay" class="absolute inset-0 flex flex-col items-center justify-center text-center px-6 bg-black/70 backdrop-blur">
 								<div class="text-xl font-semibold">Starting camera…</div>
 								<p class="mt-2 text-sm text-white/60">If you see a permissions prompt, tap Allow.</p>
@@ -71,6 +75,22 @@ app.get('/kiosk/capture', (c) => {
 				</footer>
 			</main>
 
+			<style>
+			@keyframes countdown-pop {
+				0% { transform: scale(0.5); opacity: 0; }
+				20% { transform: scale(1.15); opacity: 1; }
+				40% { transform: scale(1); }
+				80% { opacity: 1; }
+				100% { opacity: 0.3; }
+			}
+			.countdown-pop { animation: countdown-pop 0.9s ease-out both; }
+			@keyframes shutter-flash {
+				0% { opacity: 0.95; }
+				100% { opacity: 0; }
+			}
+			.shutter-flash { animation: shutter-flash 0.35s ease-out both; }
+			</style>
+
 			<script>
 			(function () {
 				const basePath = ${JSON.stringify(basePath)};
@@ -88,6 +108,10 @@ app.get('/kiosk/capture', (c) => {
 				let stream = null;
 				let capturedBlob = null;
 				let capturedUrl = null;
+				let countdownTimer = null;
+				const countdownEl = document.getElementById("cap-countdown");
+				const countdownNum = document.getElementById("cap-countdown-num");
+				const flashEl = document.getElementById("cap-flash");
 
 				function setOverlay(html) {
 					if (html === null) {
@@ -147,8 +171,56 @@ app.get('/kiosk/capture', (c) => {
 					}
 				}
 
+				function cancelCountdown() {
+					if (countdownTimer) {
+						clearInterval(countdownTimer);
+						countdownTimer = null;
+					}
+					countdownEl.classList.add("hidden");
+					countdownEl.classList.remove("flex");
+				}
+
+				function startCountdown() {
+					shutter.disabled = true;
+					hint.textContent = "Get ready!";
+					var count = 3;
+
+					countdownNum.textContent = count;
+					countdownEl.classList.remove("hidden");
+					countdownEl.classList.add("flex");
+					// Re-trigger animation
+					countdownNum.style.animation = "none";
+					void countdownNum.offsetWidth;
+					countdownNum.style.animation = "";
+
+					countdownTimer = setInterval(function () {
+						count--;
+						if (count > 0) {
+							countdownNum.textContent = count;
+							// Re-trigger pop animation
+							countdownNum.style.animation = "none";
+							void countdownNum.offsetWidth;
+							countdownNum.style.animation = "";
+						} else {
+							clearInterval(countdownTimer);
+							countdownTimer = null;
+							countdownEl.classList.add("hidden");
+							countdownEl.classList.remove("flex");
+							takePhoto();
+						}
+					}, 1000);
+				}
+
 				function takePhoto() {
 					if (!video.videoWidth) return;
+					// Flash the screen
+					flashEl.classList.remove("hidden", "shutter-flash");
+					void flashEl.offsetWidth;
+					flashEl.classList.add("shutter-flash");
+					flashEl.addEventListener("animationend", function () {
+						flashEl.classList.add("hidden");
+						flashEl.classList.remove("shutter-flash");
+					}, { once: true });
 					const canvas = document.createElement("canvas");
 					canvas.width = video.videoWidth;
 					canvas.height = video.videoHeight;
@@ -210,11 +282,11 @@ app.get('/kiosk/capture', (c) => {
 					}
 				}
 
-				shutter.addEventListener("click", takePhoto);
+				shutter.addEventListener("click", startCountdown);
 				useBtn.addEventListener("click", approve);
 				retakeBtn.addEventListener("click", retake);
-				window.addEventListener("pagehide", stopCamera);
-				window.addEventListener("beforeunload", stopCamera);
+				window.addEventListener("pagehide", function () { cancelCountdown(); stopCamera(); });
+				window.addEventListener("beforeunload", function () { cancelCountdown(); stopCamera(); });
 				startCamera();
 			})();
 			</script>`,
