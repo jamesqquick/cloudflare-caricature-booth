@@ -186,7 +186,7 @@ app.get('/admin', async (c) => {
 						+ imageHtml
 						+ '<div class="absolute top-2 left-2 z-10"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] ring-1 ' + statusClass(status) + '">' + escapeHtml(status) + '</span></div>'
 						+ '<div class="absolute bottom-2 right-2 z-10"><time data-ts="' + (r.createdAt || 0) + '" class="text-[10px] text-white/60 bg-black/50 rounded px-1.5 py-0.5">' + (r.createdAt ? fmtRelative(r.createdAt) : "") + '</time></div>'
-						+ '<div class="admin-card-overlay absolute inset-0 z-20 flex items-start justify-end gap-1.5 p-2 bg-gradient-to-b from-black/60 via-transparent to-transparent transition-opacity pointer-events-none">' + actions.map(function (a) { return '<span class="pointer-events-auto">' + a + '</span>'; }).join("") + '</div>'
+						+ '<div class="admin-card-overlay absolute inset-0 z-20 flex items-start justify-end gap-1.5 p-2 bg-gradient-to-b from-black/60 via-transparent to-transparent transition-opacity pointer-events-none" style="opacity:0">' + actions.map(function (a) { return '<span class="pointer-events-auto">' + a + '</span>'; }).join("") + '</div>'
 						+ '</a>';
 				}
 
@@ -247,6 +247,7 @@ app.get('/admin', async (c) => {
 
 				function render(snapshot) {
 					renderCards(snapshot.sessions || []);
+					attachCardHovers();
 					if (snapshot.stats) renderStats(snapshot.stats);
 					if (snapshot.totalPages != null) totalPages = snapshot.totalPages;
 					formatTimes();
@@ -360,7 +361,22 @@ app.get('/admin', async (c) => {
 					if (currentPage < totalPages) { currentPage++; poll(); }
 				});
 
+				// Hover overlay toggle via JS — CSS cascade layers in Tailwind v4
+				// make pure-CSS hover unreliable, so we toggle inline opacity directly.
+				function attachCardHovers() {
+					var cards = gridEl.querySelectorAll("[data-session-card]");
+					for (var i = 0; i < cards.length; i++) {
+						(function (card) {
+							var overlay = card.querySelector(".admin-card-overlay");
+							if (!overlay) return;
+							card.addEventListener("mouseenter", function () { overlay.style.opacity = "1"; });
+							card.addEventListener("mouseleave", function () { overlay.style.opacity = "0"; });
+						})(cards[i]);
+					}
+				}
+
 				formatTimes();
+				attachCardHovers();
 				setInterval(poll, 10000);
 			})();
 			</script>`,

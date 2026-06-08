@@ -77,10 +77,4 @@
 	opacity: 1;
 }
 
-/* Admin card hover overlay — show action buttons on hover */
-.admin-card-overlay {
-	opacity: 0;
-}
-.admin-card:hover .admin-card-overlay {
-	opacity: 1;
-}
+
