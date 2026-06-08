@@ -200,13 +200,13 @@ app.get('/', async (c) => {
 					</div>
 				</section>
 
-				<!-- Active events -->
+				${activeEvents.length > 0 ? `<!-- Active events -->
 				<section class="max-w-4xl mx-auto mt-20 sm:mt-24">
 					<h2 class="text-center text-xs uppercase tracking-[0.3em] text-white/40 mb-8">
-						${activeEvents.length > 0 ? 'Active events' : 'Events'}
+						Active events
 					</h2>
 					<div class="flex flex-col gap-4 max-w-2xl mx-auto">${eventCards}</div>
-				</section>
+				</section>` : ''}
 			</main>`,
 		),
 	);
