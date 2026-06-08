@@ -34,7 +34,7 @@ app.get('/admin/sessions/:id', async (c) => {
 
 	// Build metadata rows
 	const metaRows: [string, string][] = [
-		['Status', `<span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs ring-1 ${adminStatusClass(status)}">${escapeHtml(status)}</span>`],
+		['Image generation', `<span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs ring-1 ${adminStatusClass(status)}">${escapeHtml(status)}</span>`],
 		['Session ID', `<code class="font-mono text-xs text-white/80">${escapeHtml(session.sessionId)}</code>`],
 		['Event', escapeHtml(session.eventId ?? '—')],
 		['Scene', escapeHtml(session.sceneName ? `${session.sceneName} (${session.sceneId ?? ''})` : '—')],
