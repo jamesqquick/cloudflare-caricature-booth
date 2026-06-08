@@ -154,18 +154,18 @@ export function renderAdminCard(r: AdminSessionRow): string {
 	const actions: string[] = [];
 	if (isCompleted) {
 		actions.push(
-			`<button type="button" data-action="retry-print" data-session="${escapeAttr(r.sessionId)}" class="inline-flex items-center justify-center size-8 rounded-full bg-cf-orange/80 text-black hover:bg-cf-orange disabled:opacity-50 disabled:cursor-not-allowed transition" title="Retry print">` +
+			`<button type="button" data-action="retry-print" data-session="${escapeAttr(r.sessionId)}" class="inline-flex items-center justify-center size-8 rounded-full bg-cf-orange/80 text-black cursor-pointer hover:bg-cf-orange disabled:opacity-50 disabled:cursor-not-allowed transition" title="Retry print">` +
 			`<svg class="size-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0 .229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0 0 21 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 0 0-1.913-.247M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 0 1 1.913-.247m10.5 0a48.536 48.536 0 0 0-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18.25 7.034v-.534" /></svg>` +
 			`</button>`,
 		);
 	}
 	actions.push(
-		`<button type="button" data-action="delete-session" data-session="${escapeAttr(r.sessionId)}" class="inline-flex items-center justify-center size-8 rounded-full bg-red-500/80 text-white hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition" title="Delete">` +
+		`<button type="button" data-action="delete-session" data-session="${escapeAttr(r.sessionId)}" class="inline-flex items-center justify-center size-8 rounded-full bg-red-500/80 text-white cursor-pointer hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition" title="Delete">` +
 		`<svg class="size-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>` +
 		`</button>`,
 	);
 	actions.push(
-		`<button type="button" data-action="view-details" data-session="${escapeAttr(r.sessionId)}" class="inline-flex items-center justify-center size-8 rounded-full bg-white/20 text-white hover:bg-white/40 transition" title="View details">` +
+		`<button type="button" data-action="view-details" data-session="${escapeAttr(r.sessionId)}" class="inline-flex items-center justify-center size-8 rounded-full bg-white/20 text-white cursor-pointer hover:bg-white/40 transition" title="View details">` +
 		`<svg class="size-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>` +
 		`</button>`,
 	);
