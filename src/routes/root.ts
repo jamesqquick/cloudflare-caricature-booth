@@ -8,14 +8,9 @@ app.get('/', async (c) => {
 	const events = await listEvents(c.env);
 	const activeEvents = events.filter((e) => e.status === 'active');
 
-	if (activeEvents.length === 1) {
-		// Single active event — redirect straight to it
-		return c.redirect(`/e/${activeEvents[0].id}`, 302);
-	}
-
-	const cards =
+	const eventCards =
 		activeEvents.length === 0
-			? `<p class="text-white/60 text-center py-12">No active events right now.</p>`
+			? `<p class="text-white/60 text-center py-8">No events are running right now. Check back soon!</p>`
 			: activeEvents
 					.map(
 						(e) => `<a href="/e/${escapeAttr(e.id)}" class="block rounded-2xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/30 transition p-6">
@@ -27,15 +22,116 @@ app.get('/', async (c) => {
 
 	return c.html(
 		page(
-			'AI Caricature Booth',
-			`<main class="max-w-2xl mx-auto px-6 py-16">
-				<h1 class="text-4xl font-bold text-center mb-2">AI Caricature Booth</h1>
-				<p class="text-center text-white/60 mb-12">Pick an event to get started.</p>
-				<div class="flex flex-col gap-4">${cards}</div>
-				<footer class="mt-16 text-center text-[11px] uppercase tracking-[0.25em] text-white/30">
-					Built end-to-end on Cloudflare
-				</footer>
-			</main>`,
+			'AI Caricature Booth — Built on Cloudflare',
+			`<main class="px-6 sm:px-8 pb-20">
+				<!-- Hero -->
+				<section class="max-w-4xl mx-auto pt-10 sm:pt-20 flex flex-col items-center text-center">
+					<h1 class="text-[clamp(2rem,5vw,3.5rem)] font-bold leading-tight text-balance">
+						AI Caricature Booth
+					</h1>
+					<p class="mt-4 max-w-xl text-lg text-white/70 text-balance">
+						An AI-powered photo booth that transforms selfies into
+						hand-drawn ink caricature postcards — generated, composited,
+						and printed on the spot. Built end-to-end on Cloudflare.
+					</p>
+				</section>
+
+				<!-- How it works -->
+				<section class="max-w-4xl mx-auto mt-20 sm:mt-28">
+					<h2 class="text-center text-xs uppercase tracking-[0.3em] text-white/40 mb-8">
+						How it works
+					</h2>
+					<ol class="grid sm:grid-cols-3 gap-4 sm:gap-6">
+						<li class="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+							<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 01</div>
+							<div class="mt-3 text-lg font-semibold">Snap a selfie</div>
+							<p class="mt-2 text-sm text-white/60">
+								Step up to the booth and take a photo. No app, no signup.
+							</p>
+						</li>
+						<li class="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+							<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 02</div>
+							<div class="mt-3 text-lg font-semibold">Pick a scene</div>
+							<p class="mt-2 text-sm text-white/60">
+								Choose a backdrop from the scene picker to set the vibe.
+							</p>
+						</li>
+						<li class="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+							<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 03</div>
+							<div class="mt-3 text-lg font-semibold">Take home a postcard</div>
+							<p class="mt-2 text-sm text-white/60">
+								AI generates your caricature, we print it on the spot, and
+								you get a digital copy too.
+							</p>
+						</li>
+					</ol>
+				</section>
+
+				<!-- Built on Cloudflare -->
+				<section class="max-w-4xl mx-auto mt-20 sm:mt-24">
+					<h2 class="text-center text-xs uppercase tracking-[0.3em] text-white/40 mb-8">
+						Built on Cloudflare
+					</h2>
+					<p class="text-center text-sm text-white/60 max-w-2xl mx-auto mb-8">
+						The entire application — from the camera capture to the printed
+						postcard — runs on 10 Cloudflare services.
+					</p>
+					<div class="grid sm:grid-cols-2 gap-4">
+						<div class="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+							<div class="text-sm font-semibold text-cf-orange">Workers</div>
+							<p class="mt-1 text-sm text-white/60">Runtime for the entire application.</p>
+						</div>
+						<div class="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+							<div class="text-sm font-semibold text-cf-orange">Workers AI</div>
+							<p class="mt-1 text-sm text-white/60">Content moderation via Llama 3.2 Vision.</p>
+						</div>
+						<div class="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+							<div class="text-sm font-semibold text-cf-orange">Workflows</div>
+							<p class="mt-1 text-sm text-white/60">Durable 4-step caricature pipeline.</p>
+						</div>
+						<div class="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+							<div class="text-sm font-semibold text-cf-orange">Durable Objects</div>
+							<p class="mt-1 text-sm text-white/60">Per-session WebSocket state machine.</p>
+						</div>
+						<div class="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+							<div class="text-sm font-semibold text-cf-orange">D1</div>
+							<p class="mt-1 text-sm text-white/60">SQLite database for sessions, events, and scenes.</p>
+						</div>
+						<div class="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+							<div class="text-sm font-semibold text-cf-orange">R2</div>
+							<p class="mt-1 text-sm text-white/60">Object storage for selfies, caricatures, and postcards.</p>
+						</div>
+						<div class="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+							<div class="text-sm font-semibold text-cf-orange">KV</div>
+							<p class="mt-1 text-sm text-white/60">Event and scene config cache.</p>
+						</div>
+						<div class="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+							<div class="text-sm font-semibold text-cf-orange">Cloudflare Images</div>
+							<p class="mt-1 text-sm text-white/60">Postcard compositing and watermark overlays.</p>
+						</div>
+						<div class="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+							<div class="text-sm font-semibold text-cf-orange">Analytics Engine</div>
+							<p class="mt-1 text-sm text-white/60">Event telemetry and metrics.</p>
+						</div>
+						<div class="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+							<div class="text-sm font-semibold text-cf-orange">Email Sending</div>
+							<p class="mt-1 text-sm text-white/60">Digital postcard delivery.</p>
+						</div>
+					</div>
+				</section>
+
+				<!-- Active events -->
+				<section class="max-w-4xl mx-auto mt-20 sm:mt-24">
+					<h2 class="text-center text-xs uppercase tracking-[0.3em] text-white/40 mb-8">
+						${activeEvents.length > 0 ? 'Active events' : 'Events'}
+					</h2>
+					<div class="flex flex-col gap-4 max-w-2xl mx-auto">${eventCards}</div>
+				</section>
+			</main>
+
+			<footer class="px-6 sm:px-8 pb-10 text-center text-[11px] uppercase tracking-[0.25em] text-white/30">
+				Built end-to-end on Cloudflare
+			</footer>`,
 		),
 	);
 });
