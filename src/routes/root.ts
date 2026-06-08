@@ -113,40 +113,40 @@ app.get('/', async (c) => {
 
 					<!-- Desktop: horizontal flow -->
 					<div class="hidden sm:flex items-center justify-center gap-0">
-						<div class="pipe-step flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-5 w-[130px] text-center">
+						<div class="pipe-step flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-3 py-5 w-[150px] text-center">
 							<div class="pipe-icon text-2xl">📸</div>
 							<div class="text-xs font-semibold text-white/80">Upload</div>
-							<div class="pipe-service text-[10px] font-mono tracking-wider text-white/35">R2</div>
+							<p class="pipe-service text-[10px] text-white/40 leading-tight">Selfie uploaded to <span class="text-cf-orange font-semibold">R2</span> object storage.</p>
 						</div>
-						<div class="pipe-connector h-[2px] w-6 rounded-full bg-white/10"></div>
-						<div class="pipe-step flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-5 w-[130px] text-center">
+						<div class="pipe-connector h-[2px] w-4 rounded-full bg-white/10 shrink-0"></div>
+						<div class="pipe-step flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-3 py-5 w-[150px] text-center">
 							<div class="pipe-icon text-2xl">🛡️</div>
 							<div class="text-xs font-semibold text-white/80">Moderate</div>
-							<div class="pipe-service text-[10px] font-mono tracking-wider text-white/35">Workers AI</div>
+							<p class="pipe-service text-[10px] text-white/40 leading-tight">Photo screened for safety by <span class="text-cf-orange font-semibold">Workers AI</span>.</p>
 						</div>
-						<div class="pipe-connector h-[2px] w-6 rounded-full bg-white/10"></div>
-						<div class="pipe-step flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-5 w-[130px] text-center">
+						<div class="pipe-connector h-[2px] w-4 rounded-full bg-white/10 shrink-0"></div>
+						<div class="pipe-step flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-3 py-5 w-[150px] text-center">
 							<div class="pipe-icon text-2xl">🎨</div>
 							<div class="text-xs font-semibold text-white/80">Generate</div>
-							<div class="pipe-service text-[10px] font-mono tracking-wider text-white/35">Workflows</div>
+							<p class="pipe-service text-[10px] text-white/40 leading-tight">Caricature created via a durable <span class="text-cf-orange font-semibold">Workflows</span> pipeline.</p>
 						</div>
-						<div class="pipe-connector h-[2px] w-6 rounded-full bg-white/10"></div>
-						<div class="pipe-step flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-5 w-[130px] text-center">
+						<div class="pipe-connector h-[2px] w-4 rounded-full bg-white/10 shrink-0"></div>
+						<div class="pipe-step flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-3 py-5 w-[150px] text-center">
 							<div class="pipe-icon text-2xl">🖼️</div>
 							<div class="text-xs font-semibold text-white/80">Composite</div>
-							<div class="pipe-service text-[10px] font-mono tracking-wider text-white/35">Images</div>
+							<p class="pipe-service text-[10px] text-white/40 leading-tight">Postcard assembled with <span class="text-cf-orange font-semibold">Cloudflare Images</span>.</p>
 						</div>
-						<div class="pipe-connector h-[2px] w-6 rounded-full bg-white/10"></div>
-						<div class="pipe-step flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-5 w-[130px] text-center">
+						<div class="pipe-connector h-[2px] w-4 rounded-full bg-white/10 shrink-0"></div>
+						<div class="pipe-step flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-3 py-5 w-[150px] text-center">
 							<div class="pipe-icon text-2xl">💾</div>
 							<div class="text-xs font-semibold text-white/80">Store</div>
-							<div class="pipe-service text-[10px] font-mono tracking-wider text-white/35">D1 + R2</div>
+							<p class="pipe-service text-[10px] text-white/40 leading-tight">Session saved to <span class="text-cf-orange font-semibold">D1</span> and images to <span class="text-cf-orange font-semibold">R2</span>.</p>
 						</div>
-						<div class="pipe-connector h-[2px] w-6 rounded-full bg-white/10"></div>
-						<div class="pipe-step flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-5 w-[130px] text-center">
+						<div class="pipe-connector h-[2px] w-4 rounded-full bg-white/10 shrink-0"></div>
+						<div class="pipe-step flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-3 py-5 w-[150px] text-center">
 							<div class="pipe-icon text-2xl">🖨️</div>
 							<div class="text-xs font-semibold text-white/80">Deliver</div>
-							<div class="pipe-service text-[10px] font-mono tracking-wider text-white/35">Print + Email</div>
+							<p class="pipe-service text-[10px] text-white/40 leading-tight">Postcard printed on-site and sent via <span class="text-cf-orange font-semibold">Email</span>.</p>
 						</div>
 					</div>
 
@@ -155,48 +155,48 @@ app.get('/', async (c) => {
 						<div class="pipe-step flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4 w-full max-w-xs">
 							<div class="pipe-icon text-2xl shrink-0">📸</div>
 							<div>
-								<div class="text-sm font-semibold text-white/80">Upload selfie</div>
-								<div class="pipe-service text-[10px] font-mono tracking-wider text-white/35">R2</div>
+								<div class="text-sm font-semibold text-white/80">Upload</div>
+								<p class="pipe-service text-xs text-white/40 mt-0.5">Selfie uploaded to <span class="text-cf-orange font-semibold">R2</span> object storage.</p>
 							</div>
 						</div>
 						<div class="pipe-connector w-[2px] h-4 rounded-full bg-white/10"></div>
 						<div class="pipe-step flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4 w-full max-w-xs">
 							<div class="pipe-icon text-2xl shrink-0">🛡️</div>
 							<div>
-								<div class="text-sm font-semibold text-white/80">Moderate content</div>
-								<div class="pipe-service text-[10px] font-mono tracking-wider text-white/35">Workers AI</div>
+								<div class="text-sm font-semibold text-white/80">Moderate</div>
+								<p class="pipe-service text-xs text-white/40 mt-0.5">Photo screened for safety by <span class="text-cf-orange font-semibold">Workers AI</span>.</p>
 							</div>
 						</div>
 						<div class="pipe-connector w-[2px] h-4 rounded-full bg-white/10"></div>
 						<div class="pipe-step flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4 w-full max-w-xs">
 							<div class="pipe-icon text-2xl shrink-0">🎨</div>
 							<div>
-								<div class="text-sm font-semibold text-white/80">Generate caricature</div>
-								<div class="pipe-service text-[10px] font-mono tracking-wider text-white/35">Workflows</div>
+								<div class="text-sm font-semibold text-white/80">Generate</div>
+								<p class="pipe-service text-xs text-white/40 mt-0.5">Caricature created via a durable <span class="text-cf-orange font-semibold">Workflows</span> pipeline.</p>
 							</div>
 						</div>
 						<div class="pipe-connector w-[2px] h-4 rounded-full bg-white/10"></div>
 						<div class="pipe-step flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4 w-full max-w-xs">
 							<div class="pipe-icon text-2xl shrink-0">🖼️</div>
 							<div>
-								<div class="text-sm font-semibold text-white/80">Composite postcard</div>
-								<div class="pipe-service text-[10px] font-mono tracking-wider text-white/35">Images</div>
+								<div class="text-sm font-semibold text-white/80">Composite</div>
+								<p class="pipe-service text-xs text-white/40 mt-0.5">Postcard assembled with <span class="text-cf-orange font-semibold">Cloudflare Images</span>.</p>
 							</div>
 						</div>
 						<div class="pipe-connector w-[2px] h-4 rounded-full bg-white/10"></div>
 						<div class="pipe-step flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4 w-full max-w-xs">
 							<div class="pipe-icon text-2xl shrink-0">💾</div>
 							<div>
-								<div class="text-sm font-semibold text-white/80">Store results</div>
-								<div class="pipe-service text-[10px] font-mono tracking-wider text-white/35">D1 + R2</div>
+								<div class="text-sm font-semibold text-white/80">Store</div>
+								<p class="pipe-service text-xs text-white/40 mt-0.5">Session saved to <span class="text-cf-orange font-semibold">D1</span> and images to <span class="text-cf-orange font-semibold">R2</span>.</p>
 							</div>
 						</div>
 						<div class="pipe-connector w-[2px] h-4 rounded-full bg-white/10"></div>
 						<div class="pipe-step flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4 w-full max-w-xs">
 							<div class="pipe-icon text-2xl shrink-0">🖨️</div>
 							<div>
-								<div class="text-sm font-semibold text-white/80">Deliver postcard</div>
-								<div class="pipe-service text-[10px] font-mono tracking-wider text-white/35">Print + Email</div>
+								<div class="text-sm font-semibold text-white/80">Deliver</div>
+								<p class="pipe-service text-xs text-white/40 mt-0.5">Postcard printed on-site and sent via <span class="text-cf-orange font-semibold">Email</span>.</p>
 							</div>
 						</div>
 					</div>
