@@ -113,6 +113,73 @@ app.get('/kiosk/capture', (c) => {
 				const countdownNum = document.getElementById("cap-countdown-num");
 				const flashEl = document.getElementById("cap-flash");
 
+				// ── Audio ──
+				var audioCtx = null;
+				try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+
+				function unlockAudio() {
+					if (audioCtx && audioCtx.state === "suspended") {
+						audioCtx.resume().catch(function () {});
+					}
+				}
+
+				function playBeep(frequency, duration) {
+					if (!audioCtx) return;
+					var osc = audioCtx.createOscillator();
+					var gain = audioCtx.createGain();
+					osc.connect(gain);
+					gain.connect(audioCtx.destination);
+					osc.frequency.value = frequency;
+					gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+					gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+					osc.start();
+					osc.stop(audioCtx.currentTime + duration);
+				}
+
+				function playShutterSound() {
+					if (!audioCtx) return;
+					// Two-part shutter: sharp click + softer curtain close (SLR style)
+					var now = audioCtx.currentTime;
+					// Part 1: short sharp click
+					var len1 = Math.floor(audioCtx.sampleRate * 0.025);
+					var buf1 = audioCtx.createBuffer(1, len1, audioCtx.sampleRate);
+					var d1 = buf1.getChannelData(0);
+					for (var i = 0; i < len1; i++) {
+						d1[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len1, 10);
+					}
+					var src1 = audioCtx.createBufferSource();
+					src1.buffer = buf1;
+					var filt1 = audioCtx.createBiquadFilter();
+					filt1.type = "highpass";
+					filt1.frequency.value = 2500;
+					filt1.Q.value = 0.5;
+					var gain1 = audioCtx.createGain();
+					gain1.gain.setValueAtTime(0.7, now);
+					src1.connect(filt1);
+					filt1.connect(gain1);
+					gain1.connect(audioCtx.destination);
+					src1.start(now);
+					// Part 2: softer curtain close
+					var len2 = Math.floor(audioCtx.sampleRate * 0.06);
+					var buf2 = audioCtx.createBuffer(1, len2, audioCtx.sampleRate);
+					var d2 = buf2.getChannelData(0);
+					for (var i = 0; i < len2; i++) {
+						d2[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len2, 5);
+					}
+					var src2 = audioCtx.createBufferSource();
+					src2.buffer = buf2;
+					var filt2 = audioCtx.createBiquadFilter();
+					filt2.type = "bandpass";
+					filt2.frequency.value = 1800;
+					filt2.Q.value = 0.8;
+					var gain2 = audioCtx.createGain();
+					gain2.gain.setValueAtTime(0.35, now + 0.04);
+					src2.connect(filt2);
+					filt2.connect(gain2);
+					gain2.connect(audioCtx.destination);
+					src2.start(now + 0.04);
+				}
+
 				function setOverlay(html) {
 					if (html === null) {
 						overlay.classList.add("hidden");
@@ -183,6 +250,7 @@ app.get('/kiosk/capture', (c) => {
 				function startCountdown() {
 					shutter.disabled = true;
 					hint.textContent = "Get ready!";
+					unlockAudio();
 					var count = 3;
 
 					countdownNum.textContent = count;
@@ -192,6 +260,7 @@ app.get('/kiosk/capture', (c) => {
 					countdownNum.style.animation = "none";
 					void countdownNum.offsetWidth;
 					countdownNum.style.animation = "";
+					playBeep(880, 0.15);
 
 					countdownTimer = setInterval(function () {
 						count--;
@@ -201,6 +270,7 @@ app.get('/kiosk/capture', (c) => {
 							countdownNum.style.animation = "none";
 							void countdownNum.offsetWidth;
 							countdownNum.style.animation = "";
+							playBeep(count === 1 ? 1200 : 880, 0.15);
 						} else {
 							clearInterval(countdownTimer);
 							countdownTimer = null;
@@ -213,6 +283,7 @@ app.get('/kiosk/capture', (c) => {
 
 				function takePhoto() {
 					if (!video.videoWidth) return;
+					playShutterSound();
 					// Flash the screen
 					flashEl.classList.remove("hidden", "shutter-flash");
 					void flashEl.offsetWidth;
@@ -285,8 +356,9 @@ app.get('/kiosk/capture', (c) => {
 				shutter.addEventListener("click", startCountdown);
 				useBtn.addEventListener("click", approve);
 				retakeBtn.addEventListener("click", retake);
-				window.addEventListener("pagehide", function () { cancelCountdown(); stopCamera(); });
-				window.addEventListener("beforeunload", function () { cancelCountdown(); stopCamera(); });
+				function cleanup() { cancelCountdown(); stopCamera(); if (audioCtx) { audioCtx.close().catch(function () {}); audioCtx = null; } }
+				window.addEventListener("pagehide", cleanup);
+				window.addEventListener("beforeunload", cleanup);
 				startCamera();
 			})();
 			</script>`,
