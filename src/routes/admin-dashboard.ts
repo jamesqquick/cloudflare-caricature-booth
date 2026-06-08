@@ -186,7 +186,7 @@ app.get('/admin', async (c) => {
 						+ imageHtml
 						+ '<div class="absolute top-2 left-2 z-10"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] ring-1 ' + statusClass(status) + '">' + escapeHtml(status) + '</span></div>'
 						+ '<div class="absolute bottom-2 right-2 z-10"><time data-ts="' + (r.createdAt || 0) + '" class="text-[10px] text-white/60 bg-black/50 rounded px-1.5 py-0.5">' + (r.createdAt ? fmtRelative(r.createdAt) : "") + '</time></div>'
-						+ '<div class="absolute inset-0 z-20 flex items-start justify-end gap-1.5 p-2 bg-gradient-to-b from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">' + actions.join("") + '</div>'
+						+ '<div class="absolute inset-0 z-20 flex items-start justify-end gap-1.5 p-2 bg-gradient-to-b from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">' + actions.map(function (a) { return '<span class="pointer-events-auto">' + a + '</span>'; }).join("") + '</div>'
 						+ '</a>';
 				}
 
