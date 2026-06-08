@@ -35,13 +35,12 @@ app.get('/kiosk/done', (c) => {
 
 				<section class="flex-1 min-h-0 flex flex-col items-center px-4 sm:px-8 pt-2 pb-4 sm:pb-6 gap-3 sm:gap-4">
 					<h1 class="text-[clamp(1.5rem,4vw,2.25rem)] font-bold leading-tight text-center">
-						Your postcard is ready! 🎉
+						Your postcard is ready!
 					</h1>
 
 					<figure class="w-full max-w-2xl flex-1 min-h-0 flex flex-col justify-center">
 						<img id="done-postcard" alt="your postcard"
 							class="w-full max-h-full object-contain rounded-2xl border border-white/10 bg-black/40 shadow-[0_0_60px_rgba(246,130,31,0.25)]" />
-						<figcaption id="done-meta" class="mt-1.5 text-center text-xs text-white/40"></figcaption>
 					</figure>
 
 					<div class="flex flex-col sm:flex-row items-center gap-3 max-w-lg w-full">
@@ -72,7 +71,6 @@ app.get('/kiosk/done', (c) => {
 			(function () {
 				const basePath = ${JSON.stringify(basePath)};
 				const postcardEl = document.getElementById("done-postcard");
-				const metaEl     = document.getElementById("done-meta");
 				const secsEl     = document.getElementById("done-countdown-secs");
 				const restartBtn = document.getElementById("done-restart");
 				const printBtn   = document.getElementById("done-print");
@@ -111,14 +109,10 @@ app.get('/kiosk/done', (c) => {
 
 				if (payload && payload.postcardKey) {
 					postcardEl.src = basePath + "/api/run-img?key=" + encodeURIComponent(payload.postcardKey);
-					const scenePart = payload.sceneName || payload.sceneId || "";
-					metaEl.textContent = scenePart ? scenePart + " · " + (resolvedSid || "").slice(0, 8) + "…" : "";
 				} else if (resolvedSid) {
 					postcardEl.src = basePath + "/api/run-img?key=" + encodeURIComponent("runs/" + resolvedSid + "/postcard.jpg");
-					metaEl.textContent = "session " + resolvedSid.slice(0, 8) + "…";
 				} else {
 					postcardEl.classList.add("hidden");
-					metaEl.textContent = "No postcard found — please start over.";
 				}
 
 				var printPollTimer = null;
