@@ -23,13 +23,46 @@ export function escapeScriptJson(json: string): string {
 		.replace(/\u2029/g, '\\u2029');
 }
 
+/** Optional Open Graph / Twitter Card meta tags for social sharing. */
+export interface PageMeta {
+	ogTitle?: string;
+	ogDescription?: string;
+	ogImage?: string;
+	ogUrl?: string;
+	twitterCard?: 'summary' | 'summary_large_image';
+}
+
+/** Build OG / Twitter Card meta tag HTML from a PageMeta object. */
+function renderMetaTags(meta: PageMeta): string {
+	const tags: string[] = [];
+	if (meta.ogTitle) {
+		tags.push(`<meta property="og:title" content="${escapeAttr(meta.ogTitle)}" />`);
+		tags.push(`<meta name="twitter:title" content="${escapeAttr(meta.ogTitle)}" />`);
+	}
+	if (meta.ogDescription) {
+		tags.push(`<meta property="og:description" content="${escapeAttr(meta.ogDescription)}" />`);
+		tags.push(`<meta name="twitter:description" content="${escapeAttr(meta.ogDescription)}" />`);
+	}
+	if (meta.ogImage) {
+		tags.push(`<meta property="og:image" content="${escapeAttr(meta.ogImage)}" />`);
+		tags.push(`<meta name="twitter:image" content="${escapeAttr(meta.ogImage)}" />`);
+	}
+	if (meta.ogUrl) {
+		tags.push(`<meta property="og:url" content="${escapeAttr(meta.ogUrl)}" />`);
+	}
+	tags.push(`<meta property="og:type" content="website" />`);
+	tags.push(`<meta name="twitter:card" content="${meta.twitterCard ?? 'summary'}" />`);
+	return tags.join('\n\t\t');
+}
+
 /** Standard page shell used by all non-kiosk routes. */
-export const page = (title: string, body: string) => `<!doctype html>
+export const page = (title: string, body: string, meta?: PageMeta) => `<!doctype html>
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
 		<title>${title}</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		${meta ? renderMetaTags(meta) : ''}
 		<link rel="stylesheet" href="/app.css" />
 		<link rel="icon" href="/favicon.png" />
 	</head>
