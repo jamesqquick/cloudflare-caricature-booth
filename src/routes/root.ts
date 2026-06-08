@@ -8,14 +8,9 @@ app.get('/', async (c) => {
 	const events = await listEvents(c.env);
 	const activeEvents = events.filter((e) => e.status === 'active');
 
-	if (activeEvents.length === 1) {
-		// Single active event — redirect straight to it
-		return c.redirect(`/e/${activeEvents[0].id}`, 302);
-	}
-
-	const cards =
+	const eventCards =
 		activeEvents.length === 0
-			? `<p class="text-white/60 text-center py-12">No active events right now.</p>`
+			? `<p class="text-white/60 text-center py-8">No events are running right now. Check back soon!</p>`
 			: activeEvents
 					.map(
 						(e) => `<a href="/e/${escapeAttr(e.id)}" class="block rounded-2xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/30 transition p-6">
@@ -28,13 +23,190 @@ app.get('/', async (c) => {
 	return c.html(
 		page(
 			'AI Caricature Booth',
-			`<main class="max-w-2xl mx-auto px-6 py-16">
-				<h1 class="text-4xl font-bold text-center mb-2">AI Caricature Booth</h1>
-				<p class="text-center text-white/60 mb-12">Pick an event to get started.</p>
-				<div class="flex flex-col gap-4">${cards}</div>
-				<footer class="mt-16 text-center text-[11px] uppercase tracking-[0.25em] text-white/30">
-					Built end-to-end on Cloudflare
-				</footer>
+			`<main class="px-6 sm:px-8 pb-20">
+				<!-- Hero -->
+				<section class="max-w-4xl mx-auto pt-10 sm:pt-20 flex flex-col items-center text-center">
+					<h1 class="text-[clamp(2rem,5vw,3.5rem)] font-bold leading-tight text-balance">
+						AI Caricature Booth
+					</h1>
+					<p class="mt-4 max-w-xl text-lg text-white/70 text-balance">
+						Take a selfie, pick a scene, and walk away with a
+						hand-drawn ink caricature postcard. Generated, composited,
+						and printed on the spot with Cloudflare.
+					</p>
+				</section>
+
+				<!-- How it works -->
+				<section class="max-w-4xl mx-auto mt-20 sm:mt-28">
+					<h2 class="text-center text-xs uppercase tracking-[0.3em] text-white/40 mb-8">
+						How it works
+					</h2>
+					<ol class="grid sm:grid-cols-3 gap-4 sm:gap-6">
+						<li class="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+							<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 01</div>
+							<div class="mt-3 text-lg font-semibold">Snap a selfie</div>
+							<p class="mt-2 text-sm text-white/60">
+								Step up to the booth and take a photo. No app, no signup.
+							</p>
+						</li>
+						<li class="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+							<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 02</div>
+							<div class="mt-3 text-lg font-semibold">Pick a scene</div>
+							<p class="mt-2 text-sm text-white/60">
+								Choose a backdrop from the scene picker.
+							</p>
+						</li>
+						<li class="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+							<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 03</div>
+							<div class="mt-3 text-lg font-semibold">Take home a postcard</div>
+							<p class="mt-2 text-sm text-white/60">
+								AI generates your caricature, we print it on the spot, and
+								you get a digital copy too.
+							</p>
+						</li>
+					</ol>
+				</section>
+
+				<!-- Animated pipeline -->
+				<section class="max-w-4xl mx-auto mt-20 sm:mt-28">
+					<h2 class="text-center text-xs uppercase tracking-[0.3em] text-white/40 mb-10">
+						Under the hood
+					</h2>
+
+					<style>
+						@keyframes pipe-glow {
+							0%, 14% { opacity: 1; border-color: rgba(246,130,31,0.6); background: rgba(246,130,31,0.08); box-shadow: 0 0 30px rgba(246,130,31,0.12); }
+							18%, 100% { opacity: 0.45; border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.02); box-shadow: none; }
+						}
+						@keyframes pipe-icon-pop {
+							0%, 14% { transform: scale(1.18); }
+							18%, 100% { transform: scale(1); }
+						}
+						.pipe-card { animation: pipe-glow 9s infinite; transition: all 0.4s ease; }
+						.pipe-card .pipe-icon { animation: pipe-icon-pop 9s infinite; transition: transform 0.4s ease; }
+						.pipe-card:nth-child(1), .pipe-card:nth-child(1) .pipe-icon { animation-delay: 0s; }
+						.pipe-card:nth-child(2), .pipe-card:nth-child(2) .pipe-icon { animation-delay: 1.5s; }
+						.pipe-card:nth-child(3), .pipe-card:nth-child(3) .pipe-icon { animation-delay: 3s; }
+						.pipe-card:nth-child(4), .pipe-card:nth-child(4) .pipe-icon { animation-delay: 4.5s; }
+						.pipe-card:nth-child(5), .pipe-card:nth-child(5) .pipe-icon { animation-delay: 6s; }
+						.pipe-card:nth-child(6), .pipe-card:nth-child(6) .pipe-icon { animation-delay: 7.5s; }
+					</style>
+
+					<div class="grid sm:grid-cols-3 gap-4 sm:gap-6">
+						<div class="pipe-card rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+							<div class="flex items-center gap-3 mb-3">
+								<div class="pipe-icon text-2xl">📸</div>
+								<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 01</div>
+							</div>
+							<div class="text-lg font-semibold">Upload</div>
+							<p class="mt-2 text-sm text-white/60">Your selfie goes straight into <span class="text-cf-orange font-semibold">R2</span> object storage.</p>
+						</div>
+						<div class="pipe-card rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+							<div class="flex items-center gap-3 mb-3">
+								<div class="pipe-icon text-2xl">🛡️</div>
+								<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 02</div>
+							</div>
+							<div class="text-lg font-semibold">Moderate</div>
+							<p class="mt-2 text-sm text-white/60"><span class="text-cf-orange font-semibold">Workers AI</span> screens the photo for safety with Llama 3.2 Vision.</p>
+						</div>
+						<div class="pipe-card rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+							<div class="flex items-center gap-3 mb-3">
+								<div class="pipe-icon text-2xl">🎨</div>
+								<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 03</div>
+							</div>
+							<div class="text-lg font-semibold">Generate</div>
+							<p class="mt-2 text-sm text-white/60">A durable <span class="text-cf-orange font-semibold">Workflows</span> pipeline generates the caricature.</p>
+						</div>
+						<div class="pipe-card rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+							<div class="flex items-center gap-3 mb-3">
+								<div class="pipe-icon text-2xl">🖼️</div>
+								<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 04</div>
+							</div>
+							<div class="text-lg font-semibold">Composite</div>
+							<p class="mt-2 text-sm text-white/60"><span class="text-cf-orange font-semibold">Cloudflare Images</span> composites the final print-ready postcard.</p>
+						</div>
+						<div class="pipe-card rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+							<div class="flex items-center gap-3 mb-3">
+								<div class="pipe-icon text-2xl">💾</div>
+								<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 05</div>
+							</div>
+							<div class="text-lg font-semibold">Store</div>
+							<p class="mt-2 text-sm text-white/60"><span class="text-cf-orange font-semibold">D1</span> stores the session and <span class="text-cf-orange font-semibold">R2</span> keeps the images.</p>
+						</div>
+						<div class="pipe-card rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+							<div class="flex items-center gap-3 mb-3">
+								<div class="pipe-icon text-2xl">🖨️</div>
+								<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 06</div>
+							</div>
+							<div class="text-lg font-semibold">Deliver</div>
+							<p class="mt-2 text-sm text-white/60">A printer produces the postcard on-site and <span class="text-cf-orange font-semibold">Email</span> sends a digital copy.</p>
+						</div>
+					</div>
+
+					<p class="text-center text-xs text-white/30 mt-8">
+						The full pipeline takes 30 to 90 seconds. <span class="text-white/50">Durable Objects</span> push real-time status over WebSockets.
+					</p>
+				</section>
+
+				<!-- Built on Cloudflare -->
+				<section class="max-w-4xl mx-auto mt-20 sm:mt-24">
+					<h2 class="text-center text-xs uppercase tracking-[0.3em] text-white/40 mb-8">
+						Built on Cloudflare
+					</h2>
+					<p class="text-center text-sm text-white/60 max-w-2xl mx-auto mb-8">
+						Ten Cloudflare services power the app, from camera capture to printed postcard.
+					</p>
+					<div class="grid sm:grid-cols-2 gap-4">
+						<a href="https://developers.cloudflare.com/workers/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
+							<div class="flex items-center gap-1.5 text-sm font-semibold text-cf-orange">Workers <svg class="w-3 h-3 opacity-50" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5h7m0 0v7m0-7L1.5 10.5"/></svg></div>
+							<p class="mt-1 text-sm text-white/60">Runtime for the entire application.</p>
+						</a>
+						<a href="https://developers.cloudflare.com/workers-ai/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
+							<div class="flex items-center gap-1.5 text-sm font-semibold text-cf-orange">Workers AI <svg class="w-3 h-3 opacity-50" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5h7m0 0v7m0-7L1.5 10.5"/></svg></div>
+							<p class="mt-1 text-sm text-white/60">Content moderation via Llama 3.2 Vision.</p>
+						</a>
+						<a href="https://developers.cloudflare.com/workflows/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
+							<div class="flex items-center gap-1.5 text-sm font-semibold text-cf-orange">Workflows <svg class="w-3 h-3 opacity-50" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5h7m0 0v7m0-7L1.5 10.5"/></svg></div>
+							<p class="mt-1 text-sm text-white/60">Durable 4-step caricature pipeline.</p>
+						</a>
+						<a href="https://developers.cloudflare.com/durable-objects/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
+							<div class="flex items-center gap-1.5 text-sm font-semibold text-cf-orange">Durable Objects <svg class="w-3 h-3 opacity-50" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5h7m0 0v7m0-7L1.5 10.5"/></svg></div>
+							<p class="mt-1 text-sm text-white/60">Per-session WebSocket state machine.</p>
+						</a>
+						<a href="https://developers.cloudflare.com/d1/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
+							<div class="flex items-center gap-1.5 text-sm font-semibold text-cf-orange">D1 <svg class="w-3 h-3 opacity-50" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5h7m0 0v7m0-7L1.5 10.5"/></svg></div>
+							<p class="mt-1 text-sm text-white/60">SQLite database for sessions, events, and scenes.</p>
+						</a>
+						<a href="https://developers.cloudflare.com/r2/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
+							<div class="flex items-center gap-1.5 text-sm font-semibold text-cf-orange">R2 <svg class="w-3 h-3 opacity-50" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5h7m0 0v7m0-7L1.5 10.5"/></svg></div>
+							<p class="mt-1 text-sm text-white/60">Object storage for selfies, caricatures, and postcards.</p>
+						</a>
+						<a href="https://developers.cloudflare.com/kv/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
+							<div class="flex items-center gap-1.5 text-sm font-semibold text-cf-orange">KV <svg class="w-3 h-3 opacity-50" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5h7m0 0v7m0-7L1.5 10.5"/></svg></div>
+							<p class="mt-1 text-sm text-white/60">Event and scene config cache.</p>
+						</a>
+						<a href="https://developers.cloudflare.com/images/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
+							<div class="flex items-center gap-1.5 text-sm font-semibold text-cf-orange">Cloudflare Images <svg class="w-3 h-3 opacity-50" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5h7m0 0v7m0-7L1.5 10.5"/></svg></div>
+							<p class="mt-1 text-sm text-white/60">Postcard compositing and watermark overlays.</p>
+						</a>
+						<a href="https://developers.cloudflare.com/analytics/analytics-engine/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
+							<div class="flex items-center gap-1.5 text-sm font-semibold text-cf-orange">Analytics Engine <svg class="w-3 h-3 opacity-50" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5h7m0 0v7m0-7L1.5 10.5"/></svg></div>
+							<p class="mt-1 text-sm text-white/60">Event telemetry and metrics.</p>
+						</a>
+						<a href="https://developers.cloudflare.com/email-routing/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
+							<div class="flex items-center gap-1.5 text-sm font-semibold text-cf-orange">Email Sending <svg class="w-3 h-3 opacity-50" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5h7m0 0v7m0-7L1.5 10.5"/></svg></div>
+							<p class="mt-1 text-sm text-white/60">Digital postcard delivery.</p>
+						</a>
+					</div>
+				</section>
+
+				${activeEvents.length > 0 ? `<!-- Active events -->
+				<section class="max-w-4xl mx-auto mt-20 sm:mt-24">
+					<h2 class="text-center text-xs uppercase tracking-[0.3em] text-white/40 mb-8">
+						Active events
+					</h2>
+					<div class="flex flex-col gap-4 max-w-2xl mx-auto">${eventCards}</div>
+				</section>` : ''}
 			</main>`,
 		),
 	);
