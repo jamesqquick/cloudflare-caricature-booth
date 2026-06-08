@@ -173,7 +173,7 @@ export function renderAdminCard(r: AdminSessionRow): string {
 	const detailHref = `/admin/sessions/${escapeAttr(r.sessionId)}`;
 
 	return (
-		`<a href="${detailHref}" class="group relative aspect-[3/2] rounded-xl overflow-hidden border border-white/10 bg-white/[0.02] hover:scale-[1.02] transition-transform cursor-pointer block" data-session-card="${escapeAttr(r.sessionId)}">` +
+		`<a href="${detailHref}" class="admin-card group relative aspect-[3/2] rounded-xl overflow-hidden border border-white/10 bg-white/[0.02] hover:scale-[1.02] transition-transform cursor-pointer block" data-session-card="${escapeAttr(r.sessionId)}">` +
 		// Image layer
 		imageHtml +
 		// Status pill (top-left)
@@ -185,7 +185,7 @@ export function renderAdminCard(r: AdminSessionRow): string {
 		`<time data-ts="${r.createdAt ?? 0}" class="text-[10px] text-white/60 bg-black/50 rounded px-1.5 py-0.5">${r.createdAt ? '...' : ''}</time>` +
 		`</div>` +
 		// Hover overlay with action buttons
-		`<div class="absolute inset-0 z-20 flex items-start justify-end gap-1.5 p-2 bg-gradient-to-b from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">` +
+		`<div class="admin-card-overlay absolute inset-0 z-20 flex items-start justify-end gap-1.5 p-2 bg-gradient-to-b from-black/60 via-transparent to-transparent opacity-0 transition-opacity pointer-events-none">` +
 		actions.map((a) => `<span class="pointer-events-auto">${a}</span>`).join('') +
 		`</div>` +
 		`</a>`
