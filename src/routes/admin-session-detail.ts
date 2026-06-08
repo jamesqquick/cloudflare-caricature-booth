@@ -162,10 +162,9 @@ app.get('/admin/sessions/:id', async (c) => {
 				</header>
 
 				<!-- Images -->
-				<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
 					${imageSection('Postcard', session.postcardKey, true)}
 					${imageSection('Selfie', session.selfieKey)}
-					${imageSection('Caricature', session.caricatureKey)}
 				</div>
 
 				<!-- Metadata -->
