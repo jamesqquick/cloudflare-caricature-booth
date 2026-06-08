@@ -112,7 +112,6 @@ app.get('/p/:id', async (c) => {
 		);
 	}
 
-	const sceneName = row.scene_name ?? 'Scene';
 	const postcardKey = row.postcard_key;
 	const postcardSrc = `${basePath}/api/run-img?key=${encodeURIComponent(postcardKey)}`;
 	const downloadSrc = `${basePath}/api/run-img?key=${encodeURIComponent(postcardKey)}&download=1`;
@@ -123,40 +122,17 @@ app.get('/p/:id', async (c) => {
 	const linkedInText = `${shareText}\n\n${pickupUrl}`;
 	const linkedInShareUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(linkedInText)}`;
 
-	const completedLabel = row.completed_at
-		? new Date(row.completed_at * 1000).toLocaleString('en-US', {
-				month: 'short',
-				day: 'numeric',
-				year: 'numeric',
-				hour: 'numeric',
-				minute: '2-digit',
-				timeZone: event.timezone,
-				timeZoneName: 'short',
-			})
-		: 'Just now';
-
 	return c.html(
 		page(
-			`Your postcard — ${sceneName}`,
-			`<header class="absolute top-0 left-0 right-0 px-6 sm:px-8 py-6 flex items-center justify-between z-10">
-				<a href="${basePath}/" class="flex items-center gap-2 text-sm uppercase tracking-widest text-white/60 hover:text-white transition">
-					<img src="/cloudflare-logo.png" alt="" class="h-5 w-5" />
-					<span>Cloudflare &middot; ${escapeAttr(event.name)}</span>
-				</a>
-			</header>
-
-			<main class="min-h-screen flex flex-col items-center px-4 sm:px-6 pt-24 pb-16">
+			'Your digital copy',
+			`<main class="min-h-screen flex flex-col items-center px-4 sm:px-6 pt-12 pb-16">
 				<div class="w-full max-w-3xl">
 					<div class="text-center mb-8">
-						<p class="text-xs uppercase tracking-[0.25em] text-cf-orange mb-3">Your digital copy</p>
-						<h1 class="text-4xl sm:text-5xl font-black tracking-tight mb-3">${sceneName}</h1>
-						<p class="text-white/50 text-sm">
-							Generated ${completedLabel} &middot; session ${id.slice(0, 8)}…
-						</p>
+						<h1 class="text-4xl sm:text-5xl font-black tracking-tight">Your digital copy</h1>
 					</div>
 
 					<figure class="mb-8">
-						<img src="${postcardSrc}" alt="Your ${sceneName} postcard"
+						<img src="${postcardSrc}" alt="Your postcard"
 							class="w-full rounded-2xl border border-white/10 bg-black/40 shadow-[0_0_60px_rgba(246,130,31,0.25)]" />
 					</figure>
 
@@ -213,7 +189,7 @@ app.get('/p/:id', async (c) => {
 				var label = document.getElementById("share-label");
 				if (btn && label) {
 					var url = ${JSON.stringify(pickupUrl)};
-					var title = ${JSON.stringify(`My ${sceneName} caricature postcard`)};
+					var title = "My caricature postcard";
 					btn.addEventListener("click", function () {
 						if (navigator.share) { navigator.share({ title: title, url: url }).catch(function () {}); return; }
 						if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -229,7 +205,7 @@ app.get('/p/:id', async (c) => {
 			})();
 			</script>`,
 			{
-				ogTitle: `My ${sceneName} Caricature`,
+				ogTitle: 'My Caricature Postcard',
 				ogDescription: `AI-generated caricature from ${event.name}, built end-to-end on Cloudflare`,
 				ogImage: absoluteImageUrl,
 				ogUrl: pickupUrl,

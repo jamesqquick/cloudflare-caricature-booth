@@ -176,3 +176,4 @@ print-agent/spool/
 
 # Git worktrees
 .worktrees/
+pnpm-lock.yaml
