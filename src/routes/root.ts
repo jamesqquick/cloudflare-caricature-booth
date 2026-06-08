@@ -82,133 +82,60 @@ app.get('/', async (c) => {
 							0%, 14% { transform: scale(1.18); }
 							18%, 100% { transform: scale(1); }
 						}
-						@keyframes arrow-glow {
-							0%, 14% { color: rgba(246,130,31,0.8); }
-							18%, 100% { color: rgba(255,255,255,0.15); }
-						}
 						.pipe-card { animation: pipe-glow 9s infinite; transition: all 0.4s ease; }
 						.pipe-card .pipe-icon { animation: pipe-icon-pop 9s infinite; transition: transform 0.4s ease; }
-						.pipe-arrow { animation: arrow-glow 9s infinite; transition: color 0.4s ease; }
+						.pipe-card:nth-child(1), .pipe-card:nth-child(1) .pipe-icon { animation-delay: 0s; }
+						.pipe-card:nth-child(2), .pipe-card:nth-child(2) .pipe-icon { animation-delay: 1.5s; }
+						.pipe-card:nth-child(3), .pipe-card:nth-child(3) .pipe-icon { animation-delay: 3s; }
+						.pipe-card:nth-child(4), .pipe-card:nth-child(4) .pipe-icon { animation-delay: 4.5s; }
+						.pipe-card:nth-child(5), .pipe-card:nth-child(5) .pipe-icon { animation-delay: 6s; }
+						.pipe-card:nth-child(6), .pipe-card:nth-child(6) .pipe-icon { animation-delay: 7.5s; }
 					</style>
 
-					<!-- Desktop: 3-col rows with arrows -->
-					<div class="hidden sm:block">
-						<!-- Row 1: steps 1-3 -->
-						<div class="flex items-stretch gap-0">
-							<div class="pipe-card flex-1 rounded-2xl border border-white/10 bg-white/[0.02] p-6" style="animation-delay:0s">
-								<div class="flex items-center gap-3 mb-3">
-									<div class="pipe-icon text-2xl" style="animation-delay:0s">📸</div>
-									<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 01</div>
-								</div>
-								<div class="text-lg font-semibold">Upload</div>
-								<p class="mt-2 text-sm text-white/60">Selfie captured and uploaded to <span class="text-cf-orange font-semibold">R2</span> object storage.</p>
-							</div>
-							<div class="pipe-arrow flex items-center px-2 text-white/15 text-xl" style="animation-delay:0.75s">→</div>
-							<div class="pipe-card flex-1 rounded-2xl border border-white/10 bg-white/[0.02] p-6" style="animation-delay:1.5s">
-								<div class="flex items-center gap-3 mb-3">
-									<div class="pipe-icon text-2xl" style="animation-delay:1.5s">🛡️</div>
-									<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 02</div>
-								</div>
-								<div class="text-lg font-semibold">Moderate</div>
-								<p class="mt-2 text-sm text-white/60">Photo screened for safety by <span class="text-cf-orange font-semibold">Workers AI</span> using Llama 3.2 Vision.</p>
-							</div>
-							<div class="pipe-arrow flex items-center px-2 text-white/15 text-xl" style="animation-delay:2.25s">→</div>
-							<div class="pipe-card flex-1 rounded-2xl border border-white/10 bg-white/[0.02] p-6" style="animation-delay:3s">
-								<div class="flex items-center gap-3 mb-3">
-									<div class="pipe-icon text-2xl" style="animation-delay:3s">🎨</div>
-									<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 03</div>
-								</div>
-								<div class="text-lg font-semibold">Generate</div>
-								<p class="mt-2 text-sm text-white/60">Caricature created through a durable <span class="text-cf-orange font-semibold">Workflows</span> pipeline.</p>
-							</div>
-						</div>
-
-						<!-- Row connector: down arrow -->
-						<div class="flex justify-end pr-[calc(16.67%-8px)]">
-							<div class="pipe-arrow text-white/15 text-xl py-1" style="animation-delay:3.75s">↓</div>
-						</div>
-
-						<!-- Row 2: steps 4-6 -->
-						<div class="flex items-stretch gap-0">
-							<div class="pipe-card flex-1 rounded-2xl border border-white/10 bg-white/[0.02] p-6" style="animation-delay:4.5s">
-								<div class="flex items-center gap-3 mb-3">
-									<div class="pipe-icon text-2xl" style="animation-delay:4.5s">🖼️</div>
-									<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 04</div>
-								</div>
-								<div class="text-lg font-semibold">Composite</div>
-								<p class="mt-2 text-sm text-white/60">Print-ready postcard assembled with <span class="text-cf-orange font-semibold">Cloudflare Images</span>.</p>
-							</div>
-							<div class="pipe-arrow flex items-center px-2 text-white/15 text-xl" style="animation-delay:5.25s">→</div>
-							<div class="pipe-card flex-1 rounded-2xl border border-white/10 bg-white/[0.02] p-6" style="animation-delay:6s">
-								<div class="flex items-center gap-3 mb-3">
-									<div class="pipe-icon text-2xl" style="animation-delay:6s">💾</div>
-									<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 05</div>
-								</div>
-								<div class="text-lg font-semibold">Store</div>
-								<p class="mt-2 text-sm text-white/60">Session saved to <span class="text-cf-orange font-semibold">D1</span> and images persisted to <span class="text-cf-orange font-semibold">R2</span>.</p>
-							</div>
-							<div class="pipe-arrow flex items-center px-2 text-white/15 text-xl" style="animation-delay:6.75s">→</div>
-							<div class="pipe-card flex-1 rounded-2xl border border-white/10 bg-white/[0.02] p-6" style="animation-delay:7.5s">
-								<div class="flex items-center gap-3 mb-3">
-									<div class="pipe-icon text-2xl" style="animation-delay:7.5s">🖨️</div>
-									<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 06</div>
-								</div>
-								<div class="text-lg font-semibold">Deliver</div>
-								<p class="mt-2 text-sm text-white/60">Postcard printed on-site and digital copy sent via <span class="text-cf-orange font-semibold">Email</span>.</p>
-							</div>
-						</div>
-					</div>
-
-					<!-- Mobile: single column with down arrows -->
-					<div class="flex sm:hidden flex-col items-center gap-0">
-						<div class="pipe-card w-full rounded-2xl border border-white/10 bg-white/[0.02] p-6" style="animation-delay:0s">
+					<div class="grid sm:grid-cols-3 gap-4 sm:gap-6">
+						<div class="pipe-card rounded-2xl border border-white/10 bg-white/[0.02] p-6">
 							<div class="flex items-center gap-3 mb-3">
-								<div class="pipe-icon text-2xl" style="animation-delay:0s">📸</div>
+								<div class="pipe-icon text-2xl">📸</div>
 								<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 01</div>
 							</div>
 							<div class="text-lg font-semibold">Upload</div>
 							<p class="mt-2 text-sm text-white/60">Selfie captured and uploaded to <span class="text-cf-orange font-semibold">R2</span> object storage.</p>
 						</div>
-						<div class="pipe-arrow text-white/15 text-lg py-1" style="animation-delay:0.75s">↓</div>
-						<div class="pipe-card w-full rounded-2xl border border-white/10 bg-white/[0.02] p-6" style="animation-delay:1.5s">
+						<div class="pipe-card rounded-2xl border border-white/10 bg-white/[0.02] p-6">
 							<div class="flex items-center gap-3 mb-3">
-								<div class="pipe-icon text-2xl" style="animation-delay:1.5s">🛡️</div>
+								<div class="pipe-icon text-2xl">🛡️</div>
 								<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 02</div>
 							</div>
 							<div class="text-lg font-semibold">Moderate</div>
 							<p class="mt-2 text-sm text-white/60">Photo screened for safety by <span class="text-cf-orange font-semibold">Workers AI</span> using Llama 3.2 Vision.</p>
 						</div>
-						<div class="pipe-arrow text-white/15 text-lg py-1" style="animation-delay:2.25s">↓</div>
-						<div class="pipe-card w-full rounded-2xl border border-white/10 bg-white/[0.02] p-6" style="animation-delay:3s">
+						<div class="pipe-card rounded-2xl border border-white/10 bg-white/[0.02] p-6">
 							<div class="flex items-center gap-3 mb-3">
-								<div class="pipe-icon text-2xl" style="animation-delay:3s">🎨</div>
+								<div class="pipe-icon text-2xl">🎨</div>
 								<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 03</div>
 							</div>
 							<div class="text-lg font-semibold">Generate</div>
 							<p class="mt-2 text-sm text-white/60">Caricature created through a durable <span class="text-cf-orange font-semibold">Workflows</span> pipeline.</p>
 						</div>
-						<div class="pipe-arrow text-white/15 text-lg py-1" style="animation-delay:3.75s">↓</div>
-						<div class="pipe-card w-full rounded-2xl border border-white/10 bg-white/[0.02] p-6" style="animation-delay:4.5s">
+						<div class="pipe-card rounded-2xl border border-white/10 bg-white/[0.02] p-6">
 							<div class="flex items-center gap-3 mb-3">
-								<div class="pipe-icon text-2xl" style="animation-delay:4.5s">🖼️</div>
+								<div class="pipe-icon text-2xl">🖼️</div>
 								<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 04</div>
 							</div>
 							<div class="text-lg font-semibold">Composite</div>
 							<p class="mt-2 text-sm text-white/60">Print-ready postcard assembled with <span class="text-cf-orange font-semibold">Cloudflare Images</span>.</p>
 						</div>
-						<div class="pipe-arrow text-white/15 text-lg py-1" style="animation-delay:5.25s">↓</div>
-						<div class="pipe-card w-full rounded-2xl border border-white/10 bg-white/[0.02] p-6" style="animation-delay:6s">
+						<div class="pipe-card rounded-2xl border border-white/10 bg-white/[0.02] p-6">
 							<div class="flex items-center gap-3 mb-3">
-								<div class="pipe-icon text-2xl" style="animation-delay:6s">💾</div>
+								<div class="pipe-icon text-2xl">💾</div>
 								<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 05</div>
 							</div>
 							<div class="text-lg font-semibold">Store</div>
 							<p class="mt-2 text-sm text-white/60">Session saved to <span class="text-cf-orange font-semibold">D1</span> and images persisted to <span class="text-cf-orange font-semibold">R2</span>.</p>
 						</div>
-						<div class="pipe-arrow text-white/15 text-lg py-1" style="animation-delay:6.75s">↓</div>
-						<div class="pipe-card w-full rounded-2xl border border-white/10 bg-white/[0.02] p-6" style="animation-delay:7.5s">
+						<div class="pipe-card rounded-2xl border border-white/10 bg-white/[0.02] p-6">
 							<div class="flex items-center gap-3 mb-3">
-								<div class="pipe-icon text-2xl" style="animation-delay:7.5s">🖨️</div>
+								<div class="pipe-icon text-2xl">🖨️</div>
 								<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 06</div>
 							</div>
 							<div class="text-lg font-semibold">Deliver</div>
@@ -232,43 +159,43 @@ app.get('/', async (c) => {
 					</p>
 					<div class="grid sm:grid-cols-2 gap-4">
 						<a href="https://developers.cloudflare.com/workers/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
-							<div class="text-sm font-semibold text-cf-orange">Workers</div>
+							<div class="flex items-center gap-1.5 text-sm font-semibold text-cf-orange">Workers <svg class="w-3 h-3 opacity-50" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5h7m0 0v7m0-7L1.5 10.5"/></svg></div>
 							<p class="mt-1 text-sm text-white/60">Runtime for the entire application.</p>
 						</a>
 						<a href="https://developers.cloudflare.com/workers-ai/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
-							<div class="text-sm font-semibold text-cf-orange">Workers AI</div>
+							<div class="flex items-center gap-1.5 text-sm font-semibold text-cf-orange">Workers AI <svg class="w-3 h-3 opacity-50" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5h7m0 0v7m0-7L1.5 10.5"/></svg></div>
 							<p class="mt-1 text-sm text-white/60">Content moderation via Llama 3.2 Vision.</p>
 						</a>
 						<a href="https://developers.cloudflare.com/workflows/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
-							<div class="text-sm font-semibold text-cf-orange">Workflows</div>
+							<div class="flex items-center gap-1.5 text-sm font-semibold text-cf-orange">Workflows <svg class="w-3 h-3 opacity-50" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5h7m0 0v7m0-7L1.5 10.5"/></svg></div>
 							<p class="mt-1 text-sm text-white/60">Durable 4-step caricature pipeline.</p>
 						</a>
 						<a href="https://developers.cloudflare.com/durable-objects/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
-							<div class="text-sm font-semibold text-cf-orange">Durable Objects</div>
+							<div class="flex items-center gap-1.5 text-sm font-semibold text-cf-orange">Durable Objects <svg class="w-3 h-3 opacity-50" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5h7m0 0v7m0-7L1.5 10.5"/></svg></div>
 							<p class="mt-1 text-sm text-white/60">Per-session WebSocket state machine.</p>
 						</a>
 						<a href="https://developers.cloudflare.com/d1/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
-							<div class="text-sm font-semibold text-cf-orange">D1</div>
+							<div class="flex items-center gap-1.5 text-sm font-semibold text-cf-orange">D1 <svg class="w-3 h-3 opacity-50" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5h7m0 0v7m0-7L1.5 10.5"/></svg></div>
 							<p class="mt-1 text-sm text-white/60">SQLite database for sessions, events, and scenes.</p>
 						</a>
 						<a href="https://developers.cloudflare.com/r2/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
-							<div class="text-sm font-semibold text-cf-orange">R2</div>
+							<div class="flex items-center gap-1.5 text-sm font-semibold text-cf-orange">R2 <svg class="w-3 h-3 opacity-50" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5h7m0 0v7m0-7L1.5 10.5"/></svg></div>
 							<p class="mt-1 text-sm text-white/60">Object storage for selfies, caricatures, and postcards.</p>
 						</a>
 						<a href="https://developers.cloudflare.com/kv/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
-							<div class="text-sm font-semibold text-cf-orange">KV</div>
+							<div class="flex items-center gap-1.5 text-sm font-semibold text-cf-orange">KV <svg class="w-3 h-3 opacity-50" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5h7m0 0v7m0-7L1.5 10.5"/></svg></div>
 							<p class="mt-1 text-sm text-white/60">Event and scene config cache.</p>
 						</a>
 						<a href="https://developers.cloudflare.com/images/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
-							<div class="text-sm font-semibold text-cf-orange">Cloudflare Images</div>
+							<div class="flex items-center gap-1.5 text-sm font-semibold text-cf-orange">Cloudflare Images <svg class="w-3 h-3 opacity-50" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5h7m0 0v7m0-7L1.5 10.5"/></svg></div>
 							<p class="mt-1 text-sm text-white/60">Postcard compositing and watermark overlays.</p>
 						</a>
 						<a href="https://developers.cloudflare.com/analytics/analytics-engine/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
-							<div class="text-sm font-semibold text-cf-orange">Analytics Engine</div>
+							<div class="flex items-center gap-1.5 text-sm font-semibold text-cf-orange">Analytics Engine <svg class="w-3 h-3 opacity-50" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5h7m0 0v7m0-7L1.5 10.5"/></svg></div>
 							<p class="mt-1 text-sm text-white/60">Event telemetry and metrics.</p>
 						</a>
 						<a href="https://developers.cloudflare.com/email-routing/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
-							<div class="text-sm font-semibold text-cf-orange">Email Sending</div>
+							<div class="flex items-center gap-1.5 text-sm font-semibold text-cf-orange">Email Sending <svg class="w-3 h-3 opacity-50" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5h7m0 0v7m0-7L1.5 10.5"/></svg></div>
 							<p class="mt-1 text-sm text-white/60">Digital postcard delivery.</p>
 						</a>
 					</div>
