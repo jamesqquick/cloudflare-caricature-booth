@@ -77,46 +77,46 @@ app.get('/', async (c) => {
 						postcard — runs on 10 Cloudflare services.
 					</p>
 					<div class="grid sm:grid-cols-2 gap-4">
-						<div class="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+						<a href="https://developers.cloudflare.com/workers/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
 							<div class="text-sm font-semibold text-cf-orange">Workers</div>
 							<p class="mt-1 text-sm text-white/60">Runtime for the entire application.</p>
-						</div>
-						<div class="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+						</a>
+						<a href="https://developers.cloudflare.com/workers-ai/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
 							<div class="text-sm font-semibold text-cf-orange">Workers AI</div>
 							<p class="mt-1 text-sm text-white/60">Content moderation via Llama 3.2 Vision.</p>
-						</div>
-						<div class="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+						</a>
+						<a href="https://developers.cloudflare.com/workflows/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
 							<div class="text-sm font-semibold text-cf-orange">Workflows</div>
 							<p class="mt-1 text-sm text-white/60">Durable 4-step caricature pipeline.</p>
-						</div>
-						<div class="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+						</a>
+						<a href="https://developers.cloudflare.com/durable-objects/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
 							<div class="text-sm font-semibold text-cf-orange">Durable Objects</div>
 							<p class="mt-1 text-sm text-white/60">Per-session WebSocket state machine.</p>
-						</div>
-						<div class="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+						</a>
+						<a href="https://developers.cloudflare.com/d1/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
 							<div class="text-sm font-semibold text-cf-orange">D1</div>
 							<p class="mt-1 text-sm text-white/60">SQLite database for sessions, events, and scenes.</p>
-						</div>
-						<div class="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+						</a>
+						<a href="https://developers.cloudflare.com/r2/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
 							<div class="text-sm font-semibold text-cf-orange">R2</div>
 							<p class="mt-1 text-sm text-white/60">Object storage for selfies, caricatures, and postcards.</p>
-						</div>
-						<div class="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+						</a>
+						<a href="https://developers.cloudflare.com/kv/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
 							<div class="text-sm font-semibold text-cf-orange">KV</div>
 							<p class="mt-1 text-sm text-white/60">Event and scene config cache.</p>
-						</div>
-						<div class="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+						</a>
+						<a href="https://developers.cloudflare.com/images/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
 							<div class="text-sm font-semibold text-cf-orange">Cloudflare Images</div>
 							<p class="mt-1 text-sm text-white/60">Postcard compositing and watermark overlays.</p>
-						</div>
-						<div class="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+						</a>
+						<a href="https://developers.cloudflare.com/analytics/analytics-engine/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
 							<div class="text-sm font-semibold text-cf-orange">Analytics Engine</div>
 							<p class="mt-1 text-sm text-white/60">Event telemetry and metrics.</p>
-						</div>
-						<div class="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+						</a>
+						<a href="https://developers.cloudflare.com/email-routing/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
 							<div class="text-sm font-semibold text-cf-orange">Email Sending</div>
 							<p class="mt-1 text-sm text-white/60">Digital postcard delivery.</p>
-						</div>
+						</a>
 					</div>
 				</section>
 
