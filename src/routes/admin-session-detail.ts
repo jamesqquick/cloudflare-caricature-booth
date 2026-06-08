@@ -3,6 +3,7 @@ import { loadAdminSession } from '../lib/admin-data';
 import { page, escapeScriptJson } from '../lib/html';
 import { escapeHtml, escapeAttr } from '../lib/html';
 import { adminStatusClass, adminPrintClass, adminTimeTag, adminFmtDuration } from '../lib/admin-render';
+import { confirmDialogFragment } from '../lib/confirm-dialog';
 import { UUID_RE } from '../lib/helpers';
 
 const app = new Hono<{ Bindings: Env }>();
@@ -184,6 +185,7 @@ app.get('/admin/sessions/:id', async (c) => {
 					${actionsHtml.join('')}
 				</section>
 			</main>
+			${confirmDialogFragment()}
 
 			<script>
 			(function () {
@@ -243,15 +245,21 @@ app.get('/admin/sessions/:id', async (c) => {
 				deleteBtn.addEventListener("click", function () {
 					var sid = deleteBtn.getAttribute("data-session");
 					var shortId = sid.slice(0, 8);
-					if (!confirm("Permanently delete ALL data for session " + shortId + "?\\n\\nThis removes the selfie, caricature, postcard, print jobs, and email. Cannot be undone.")) return;
-					deleteBtn.disabled = true;
-					callJson("/api/admin/session/" + encodeURIComponent(sid), { method: "DELETE" })
-						.then(function (j) {
-							toast("Deleted session " + shortId);
-							setTimeout(function () { window.location.href = "/admin"; }, 1500);
-						})
-						.catch(function (err) { toast("Failed: " + err.message, true); })
-						.finally(function () { deleteBtn.disabled = false; });
+					window.confirmDialog({
+						title: "Delete session " + shortId + "?",
+						message: "This permanently removes the selfie, caricature, postcard, print jobs, and email.\\n\\nThis cannot be undone.",
+						confirmLabel: "Delete session",
+					}).then(function (ok) {
+						if (!ok) return;
+						deleteBtn.disabled = true;
+						callJson("/api/admin/session/" + encodeURIComponent(sid), { method: "DELETE" })
+							.then(function (j) {
+								toast("Deleted session " + shortId);
+								setTimeout(function () { window.location.href = "/admin"; }, 1500);
+							})
+							.catch(function (err) { toast("Failed: " + err.message, true); })
+							.finally(function () { deleteBtn.disabled = false; });
+					});
 				});
 
 				formatTimes();

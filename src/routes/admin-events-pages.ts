@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { listEvents } from '../lib/event-ctx';
 import { page, escapeAttr, escapeHtml } from '../lib/html';
 import { adminEventNav, eventStatusPill } from '../lib/admin-render';
+import { confirmDialogFragment } from '../lib/confirm-dialog';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -83,6 +84,7 @@ app.get('/admin/events', async (c) => {
 					${eventCards || `<div class="px-4 py-8 text-center text-white/40">No events yet.</div>`}
 				</section>
 			</main>
+			${confirmDialogFragment()}
 			<script>
 			(function () {
 				var notyf = new Notyf({ duration: 3000, position: { x: "right", y: "top" } });
@@ -107,17 +109,23 @@ app.get('/admin/events', async (c) => {
 					}
 
 					if (action === "delete-event") {
-						if (!confirm("Delete event '" + eventId + "'? This cannot be undone.")) return;
-						btn.disabled = true;
-						fetch("/api/admin/events/" + encodeURIComponent(eventId), { method: "DELETE", credentials: "same-origin" })
-							.then(function (r) { return r.json(); })
-							.then(function (j) {
-								if (j.error) { toast(j.error, true); btn.disabled = false; return; }
-								toast("Deleted");
-								var card = document.querySelector('[data-event-card="' + eventId + '"]');
-								if (card) card.remove();
-							})
-							.catch(function (err) { toast("Delete failed: " + err.message, true); btn.disabled = false; });
+						window.confirmDialog({
+							title: "Delete event?",
+							message: "Delete event '" + eventId + "'.\\n\\nThis cannot be undone.",
+							confirmLabel: "Delete event",
+						}).then(function (ok) {
+							if (!ok) return;
+							btn.disabled = true;
+							fetch("/api/admin/events/" + encodeURIComponent(eventId), { method: "DELETE", credentials: "same-origin" })
+								.then(function (r) { return r.json(); })
+								.then(function (j) {
+									if (j.error) { toast(j.error, true); btn.disabled = false; return; }
+									toast("Deleted");
+									var card = document.querySelector('[data-event-card="' + eventId + '"]');
+									if (card) card.remove();
+								})
+								.catch(function (err) { toast("Delete failed: " + err.message, true); btn.disabled = false; });
+						});
 					}
 				});
 			})();

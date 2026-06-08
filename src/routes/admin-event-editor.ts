@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { loadEvent, loadAllScenes } from '../lib/event-ctx';
 import { page, escapeAttr, escapeHtml, escapeScriptJson } from '../lib/html';
 import { adminEventNav, eventStatusPill } from '../lib/admin-render';
+import { confirmDialogFragment } from '../lib/confirm-dialog';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -269,6 +270,7 @@ app.get('/admin/events/:eventId', async (c) => {
 					</form>
 				</section>
 			</main>
+			${confirmDialogFragment()}
 
 			<script id="scenes-data" type="application/json">${scenesJson}</script>
 			<script>
@@ -331,15 +333,21 @@ app.get('/admin/events/:eventId', async (c) => {
 				var delBtn = document.getElementById("delete-event-btn");
 				if (delBtn) {
 					delBtn.addEventListener("click", function () {
-						if (!confirm("Permanently delete this event?")) return;
-						delBtn.disabled = true;
-						fetch("/api/admin/events/" + encodeURIComponent(EVENT_ID), { method: "DELETE", credentials: "same-origin" })
-							.then(function (r) { return r.json(); })
-							.then(function (j) {
-								if (j.error) { toast(j.error, true); delBtn.disabled = false; return; }
-								window.location.href = "/admin/events";
-							})
-							.catch(function (err) { toast(err.message, true); delBtn.disabled = false; });
+						window.confirmDialog({
+							title: "Delete event?",
+							message: "Permanently delete this event.\\n\\nThis cannot be undone.",
+							confirmLabel: "Delete event",
+						}).then(function (ok) {
+							if (!ok) return;
+							delBtn.disabled = true;
+							fetch("/api/admin/events/" + encodeURIComponent(EVENT_ID), { method: "DELETE", credentials: "same-origin" })
+								.then(function (r) { return r.json(); })
+								.then(function (j) {
+									if (j.error) { toast(j.error, true); delBtn.disabled = false; return; }
+									window.location.href = "/admin/events";
+								})
+								.catch(function (err) { toast(err.message, true); delBtn.disabled = false; });
+						});
 					});
 				}
 
@@ -582,18 +590,24 @@ app.get('/admin/events/:eventId', async (c) => {
 					var delBtn = e.target.closest("[data-delete-scene]");
 					if (delBtn) {
 						var sceneId = delBtn.getAttribute("data-delete-scene");
-						if (!confirm("Delete scene '" + sceneId + "'?")) return;
-						delBtn.disabled = true;
-						fetch("/api/admin/events/" + encodeURIComponent(EVENT_ID) + "/scenes/" + encodeURIComponent(sceneId), {
-							method: "DELETE", credentials: "same-origin",
-						}).then(function (r) { return r.json(); })
-						.then(function (j) {
-							if (j.error) { toast(j.error, true); delBtn.disabled = false; return; }
-							scenesData = scenesData.filter(function (x) { return x.id !== sceneId; });
-							delete expanded[sceneId];
-							renderScenes();
-							toast("Scene deleted");
-						}).catch(function (err) { toast(err.message, true); delBtn.disabled = false; });
+						window.confirmDialog({
+							title: "Delete scene?",
+							message: "Delete scene '" + sceneId + "'.\\n\\nThis cannot be undone.",
+							confirmLabel: "Delete scene",
+						}).then(function (ok) {
+							if (!ok) return;
+							delBtn.disabled = true;
+							fetch("/api/admin/events/" + encodeURIComponent(EVENT_ID) + "/scenes/" + encodeURIComponent(sceneId), {
+								method: "DELETE", credentials: "same-origin",
+							}).then(function (r) { return r.json(); })
+							.then(function (j) {
+								if (j.error) { toast(j.error, true); delBtn.disabled = false; return; }
+								scenesData = scenesData.filter(function (x) { return x.id !== sceneId; });
+								delete expanded[sceneId];
+								renderScenes();
+								toast("Scene deleted");
+							}).catch(function (err) { toast(err.message, true); delBtn.disabled = false; });
+						});
 						return;
 					}
 				});

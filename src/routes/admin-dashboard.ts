@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { loadAdminSessions, loadAdminStats, countAdminSessions, SESSIONS_PER_PAGE } from '../lib/admin-data';
 import { page, escapeScriptJson } from '../lib/html';
 import { renderAdminStatCards, renderAdminSceneBreakdown, renderAdminCardGrid } from '../lib/admin-render';
+import { confirmDialogFragment } from '../lib/confirm-dialog';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -92,6 +93,7 @@ app.get('/admin', async (c) => {
 					</div>
 				</section>
 			</main>
+			${confirmDialogFragment()}
 
 			<script id="admin-initial" type="application/json">${escapeScriptJson(initialJson)}</script>
 			<script>
@@ -356,16 +358,24 @@ app.get('/admin', async (c) => {
 							poll();
 						});
 					} else if (action === "delete-session") {
-						if (!confirm("Permanently delete ALL data for session " + shortId + "...?" + "\\n\\n" + "This removes the selfie, caricature, postcard, print jobs, and email from our systems. Cannot be undone.")) {
-							btn.disabled = false;
-							return;
-						}
-						promise = callJson("/api/admin/session/" + encodeURIComponent(sessionId), {
-							method: "DELETE",
-						}).then(function (j) {
-							toast("Deleted session " + shortId + " (" + (j.deleted || []).length + " items)");
-							poll();
+						window.confirmDialog({
+							title: "Delete session " + shortId + "?",
+							message: "This permanently removes the selfie, caricature, postcard, print jobs, and email from our systems.\\n\\nThis cannot be undone.",
+							confirmLabel: "Delete session",
+						}).then(function (ok) {
+							if (!ok) { btn.disabled = false; return; }
+							callJson("/api/admin/session/" + encodeURIComponent(sessionId), {
+								method: "DELETE",
+							}).then(function (j) {
+								toast("Deleted session " + shortId + " (" + (j.deleted || []).length + " items)");
+								poll();
+							}).catch(function (err) {
+								toast("Failed: " + err.message, true);
+							}).finally(function () {
+								btn.disabled = false;
+							});
 						});
+						return;
 					} else {
 						btn.disabled = false;
 						return;
