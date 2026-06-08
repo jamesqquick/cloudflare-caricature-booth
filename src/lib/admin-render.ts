@@ -165,15 +165,18 @@ export function renderAdminCard(r: AdminSessionRow): string {
 		`</button>`,
 	);
 	actions.push(
-		`<a href="/admin/sessions/${escapeAttr(r.sessionId)}" class="inline-flex items-center justify-center size-8 rounded-full bg-white/20 text-white hover:bg-white/40 transition" title="View details">` +
+		`<button type="button" data-action="view-details" data-session="${escapeAttr(r.sessionId)}" class="inline-flex items-center justify-center size-8 rounded-full bg-white/20 text-white hover:bg-white/40 transition" title="View details">` +
 		`<svg class="size-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>` +
-		`</a>`,
+		`</button>`,
 	);
 
 	const detailHref = `/admin/sessions/${escapeAttr(r.sessionId)}`;
 
+	// Card is a <div> (not <a>) so we can nest interactive buttons without
+	// triggering the HTML parser's nested-anchor auto-close, which would hoist
+	// the overlay out of the card. Navigation is handled via JS click.
 	return (
-		`<a href="${detailHref}" class="admin-card group relative aspect-[3/2] rounded-xl overflow-hidden border border-white/10 bg-white/[0.02] hover:scale-[1.02] transition-transform cursor-pointer block" data-session-card="${escapeAttr(r.sessionId)}">` +
+		`<div class="admin-card group relative aspect-[3/2] rounded-xl overflow-hidden border border-white/10 bg-white/[0.02] hover:scale-[1.02] transition-transform cursor-pointer block" data-session-card="${escapeAttr(r.sessionId)}" data-href="${detailHref}" role="link" tabindex="0">` +
 		// Image layer
 		imageHtml +
 		// Status pill (top-left)
@@ -188,7 +191,7 @@ export function renderAdminCard(r: AdminSessionRow): string {
 		`<div class="admin-card-overlay absolute inset-0 z-20 flex items-start justify-end gap-1.5 p-2 bg-gradient-to-b from-black/60 via-transparent to-transparent transition-opacity pointer-events-none" style="opacity:0">` +
 		actions.map((a) => `<span class="pointer-events-auto">${a}</span>`).join('') +
 		`</div>` +
-		`</a>`
+		`</div>`
 	);
 }
 

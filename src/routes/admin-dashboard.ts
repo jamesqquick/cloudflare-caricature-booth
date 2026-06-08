@@ -175,19 +175,19 @@ app.get('/admin', async (c) => {
 						+ '</button>'
 					);
 					actions.push(
-						'<a href="/admin/sessions/' + escapeHtml(r.sessionId) + '" class="inline-flex items-center justify-center size-8 rounded-full bg-white/20 text-white hover:bg-white/40 transition" title="View details">'
+						'<button type="button" data-action="view-details" data-session="' + escapeHtml(r.sessionId) + '" class="inline-flex items-center justify-center size-8 rounded-full bg-white/20 text-white hover:bg-white/40 transition" title="View details">'
 						+ '<svg class="size-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>'
-						+ '</a>'
+						+ '</button>'
 					);
 
 					var detailHref = "/admin/sessions/" + escapeHtml(r.sessionId);
 
-					return '<a href="' + detailHref + '" class="admin-card group relative aspect-[3/2] rounded-xl overflow-hidden border border-white/10 bg-white/[0.02] hover:scale-[1.02] transition-transform cursor-pointer block" data-session-card="' + escapeHtml(r.sessionId) + '">'
+					return '<div class="admin-card group relative aspect-[3/2] rounded-xl overflow-hidden border border-white/10 bg-white/[0.02] hover:scale-[1.02] transition-transform cursor-pointer block" data-session-card="' + escapeHtml(r.sessionId) + '" data-href="' + detailHref + '" role="link" tabindex="0">'
 						+ imageHtml
 						+ '<div class="absolute top-2 left-2 z-10"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] ring-1 ' + statusClass(status) + '">' + escapeHtml(status) + '</span></div>'
 						+ '<div class="absolute bottom-2 right-2 z-10"><time data-ts="' + (r.createdAt || 0) + '" class="text-[10px] text-white/60 bg-black/50 rounded px-1.5 py-0.5">' + (r.createdAt ? fmtRelative(r.createdAt) : "") + '</time></div>'
 						+ '<div class="admin-card-overlay absolute inset-0 z-20 flex items-start justify-end gap-1.5 p-2 bg-gradient-to-b from-black/60 via-transparent to-transparent transition-opacity pointer-events-none" style="opacity:0">' + actions.map(function (a) { return '<span class="pointer-events-auto">' + a + '</span>'; }).join("") + '</div>'
-						+ '</a>';
+						+ '</div>';
 				}
 
 				function fmtAvg(secs) {
@@ -284,15 +284,28 @@ app.get('/admin', async (c) => {
 					}
 				}
 
-				var notyf = new Notyf({
-					duration: 4000,
-					position: { x: "right", y: "bottom" },
-					dismissible: true,
-					ripple: false,
-				});
+				// Notyf is loaded from a CDN; if it failed to load, don't let a
+				// ReferenceError halt the rest of the dashboard (hover, polling…).
+				var notyf = null;
+				try {
+					if (typeof Notyf !== "undefined") {
+						notyf = new Notyf({
+							duration: 4000,
+							position: { x: "right", y: "bottom" },
+							dismissible: true,
+							ripple: false,
+						});
+					}
+				} catch (e) {
+					console.error("[admin] Notyf init failed:", e);
+				}
 				function toast(msg, isError) {
-					if (isError) notyf.error(msg);
-					else         notyf.success(msg);
+					if (notyf) {
+						if (isError) notyf.error(msg);
+						else         notyf.success(msg);
+					} else {
+						console[isError ? "error" : "log"]("[admin] " + msg);
+					}
 				}
 
 				async function callJson(url, opts) {
@@ -309,15 +322,27 @@ app.get('/admin', async (c) => {
 					return body;
 				}
 
-				// Action button delegation on the card grid
+				// Click delegation on the card grid. Clicking an action button runs
+				// its action; clicking anywhere else on a card navigates to detail.
 				gridEl.addEventListener("click", function (ev) {
 					var btn = ev.target.closest && ev.target.closest("button[data-action]");
-					if (!btn) return;
+					if (!btn) {
+						// Background click → navigate to the card's detail page.
+						var card = ev.target.closest && ev.target.closest("[data-session-card]");
+						if (card && card.getAttribute("data-href")) {
+							window.location.href = card.getAttribute("data-href");
+						}
+						return;
+					}
 					ev.preventDefault();
 					ev.stopPropagation();
 					var action = btn.getAttribute("data-action");
 					var sessionId = btn.getAttribute("data-session");
 					if (!sessionId) return;
+					if (action === "view-details") {
+						window.location.href = "/admin/sessions/" + encodeURIComponent(sessionId);
+						return;
+					}
 					if (btn.disabled) return;
 					btn.disabled = true;
 					var shortId = sessionId.slice(0, 8);
@@ -361,8 +386,9 @@ app.get('/admin', async (c) => {
 					if (currentPage < totalPages) { currentPage++; poll(); }
 				});
 
-				// Hover overlay toggle via JS — CSS cascade layers in Tailwind v4
-				// make pure-CSS hover unreliable, so we toggle inline opacity directly.
+				// Hover overlay toggle via JS. The card is a <div> (not <a>) because
+				// nesting interactive buttons inside an <a> makes the HTML parser
+				// auto-close the anchor and hoist the overlay out of the card.
 				function attachCardHovers() {
 					var cards = gridEl.querySelectorAll("[data-session-card]");
 					for (var i = 0; i < cards.length; i++) {
@@ -371,6 +397,12 @@ app.get('/admin', async (c) => {
 							if (!overlay) return;
 							card.addEventListener("mouseenter", function () { overlay.style.opacity = "1"; });
 							card.addEventListener("mouseleave", function () { overlay.style.opacity = "0"; });
+							// Keyboard activation for role="link"
+							card.addEventListener("keydown", function (ev) {
+								if (ev.key === "Enter" && card.getAttribute("data-href")) {
+									window.location.href = card.getAttribute("data-href");
+								}
+							});
 						})(cards[i]);
 					}
 				}
