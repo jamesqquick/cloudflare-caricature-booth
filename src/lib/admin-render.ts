@@ -170,8 +170,10 @@ export function renderAdminCard(r: AdminSessionRow): string {
 		`</a>`,
 	);
 
+	const detailHref = `/admin/sessions/${escapeAttr(r.sessionId)}`;
+
 	return (
-		`<div class="group relative aspect-[3/2] rounded-xl overflow-hidden border border-white/10 bg-white/[0.02] hover:scale-[1.02] transition-transform cursor-pointer" data-session-card="${escapeAttr(r.sessionId)}">` +
+		`<a href="${detailHref}" class="group relative aspect-[3/2] rounded-xl overflow-hidden border border-white/10 bg-white/[0.02] hover:scale-[1.02] transition-transform cursor-pointer block" data-session-card="${escapeAttr(r.sessionId)}">` +
 		// Image layer
 		imageHtml +
 		// Status pill (top-left)
@@ -186,7 +188,7 @@ export function renderAdminCard(r: AdminSessionRow): string {
 		`<div class="absolute inset-0 z-20 flex items-start justify-end gap-1.5 p-2 bg-gradient-to-b from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">` +
 		actions.join('') +
 		`</div>` +
-		`</div>`
+		`</a>`
 	);
 }
 
