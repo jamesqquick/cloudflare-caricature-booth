@@ -22,7 +22,7 @@ app.get('/', async (c) => {
 
 	return c.html(
 		page(
-			'AI Caricature Booth — Built on Cloudflare',
+			'AI Caricature Booth',
 			`<main class="px-6 sm:px-8 pb-20">
 				<!-- Hero -->
 				<section class="max-w-4xl mx-auto pt-10 sm:pt-20 flex flex-col items-center text-center">
@@ -30,9 +30,9 @@ app.get('/', async (c) => {
 						AI Caricature Booth
 					</h1>
 					<p class="mt-4 max-w-xl text-lg text-white/70 text-balance">
-						An AI-powered photo booth that transforms selfies into
-						hand-drawn ink caricature postcards — generated, composited,
-						and printed on the spot. Built end-to-end on Cloudflare.
+						Take a selfie, pick a scene, and walk away with a
+						hand-drawn ink caricature postcard. Generated, composited,
+						and printed on the spot with Cloudflare.
 					</p>
 				</section>
 
@@ -53,7 +53,7 @@ app.get('/', async (c) => {
 							<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 02</div>
 							<div class="mt-3 text-lg font-semibold">Pick a scene</div>
 							<p class="mt-2 text-sm text-white/60">
-								Choose a backdrop from the scene picker to set the vibe.
+								Choose a backdrop from the scene picker.
 							</p>
 						</li>
 						<li class="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
@@ -99,7 +99,7 @@ app.get('/', async (c) => {
 								<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 01</div>
 							</div>
 							<div class="text-lg font-semibold">Upload</div>
-							<p class="mt-2 text-sm text-white/60">Selfie captured and uploaded to <span class="text-cf-orange font-semibold">R2</span> object storage.</p>
+							<p class="mt-2 text-sm text-white/60">Your selfie goes straight into <span class="text-cf-orange font-semibold">R2</span> object storage.</p>
 						</div>
 						<div class="pipe-card rounded-2xl border border-white/10 bg-white/[0.02] p-6">
 							<div class="flex items-center gap-3 mb-3">
@@ -107,7 +107,7 @@ app.get('/', async (c) => {
 								<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 02</div>
 							</div>
 							<div class="text-lg font-semibold">Moderate</div>
-							<p class="mt-2 text-sm text-white/60">Photo screened for safety by <span class="text-cf-orange font-semibold">Workers AI</span> using Llama 3.2 Vision.</p>
+							<p class="mt-2 text-sm text-white/60"><span class="text-cf-orange font-semibold">Workers AI</span> screens the photo for safety with Llama 3.2 Vision.</p>
 						</div>
 						<div class="pipe-card rounded-2xl border border-white/10 bg-white/[0.02] p-6">
 							<div class="flex items-center gap-3 mb-3">
@@ -115,7 +115,7 @@ app.get('/', async (c) => {
 								<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 03</div>
 							</div>
 							<div class="text-lg font-semibold">Generate</div>
-							<p class="mt-2 text-sm text-white/60">Caricature created through a durable <span class="text-cf-orange font-semibold">Workflows</span> pipeline.</p>
+							<p class="mt-2 text-sm text-white/60">A durable <span class="text-cf-orange font-semibold">Workflows</span> pipeline generates the caricature.</p>
 						</div>
 						<div class="pipe-card rounded-2xl border border-white/10 bg-white/[0.02] p-6">
 							<div class="flex items-center gap-3 mb-3">
@@ -123,7 +123,7 @@ app.get('/', async (c) => {
 								<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 04</div>
 							</div>
 							<div class="text-lg font-semibold">Composite</div>
-							<p class="mt-2 text-sm text-white/60">Print-ready postcard assembled with <span class="text-cf-orange font-semibold">Cloudflare Images</span>.</p>
+							<p class="mt-2 text-sm text-white/60"><span class="text-cf-orange font-semibold">Cloudflare Images</span> composites the final print-ready postcard.</p>
 						</div>
 						<div class="pipe-card rounded-2xl border border-white/10 bg-white/[0.02] p-6">
 							<div class="flex items-center gap-3 mb-3">
@@ -131,7 +131,7 @@ app.get('/', async (c) => {
 								<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 05</div>
 							</div>
 							<div class="text-lg font-semibold">Store</div>
-							<p class="mt-2 text-sm text-white/60">Session saved to <span class="text-cf-orange font-semibold">D1</span> and images persisted to <span class="text-cf-orange font-semibold">R2</span>.</p>
+							<p class="mt-2 text-sm text-white/60"><span class="text-cf-orange font-semibold">D1</span> stores the session and <span class="text-cf-orange font-semibold">R2</span> keeps the images.</p>
 						</div>
 						<div class="pipe-card rounded-2xl border border-white/10 bg-white/[0.02] p-6">
 							<div class="flex items-center gap-3 mb-3">
@@ -139,12 +139,12 @@ app.get('/', async (c) => {
 								<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 06</div>
 							</div>
 							<div class="text-lg font-semibold">Deliver</div>
-							<p class="mt-2 text-sm text-white/60">Postcard printed on-site and digital copy sent via <span class="text-cf-orange font-semibold">Email</span>.</p>
+							<p class="mt-2 text-sm text-white/60">A printer produces the postcard on-site and <span class="text-cf-orange font-semibold">Email</span> sends a digital copy.</p>
 						</div>
 					</div>
 
 					<p class="text-center text-xs text-white/30 mt-8">
-						The full pipeline runs in ~30–90 seconds with real-time status via <span class="text-white/50">Durable Objects</span> + WebSockets.
+						The full pipeline takes 30 to 90 seconds. <span class="text-white/50">Durable Objects</span> push real-time status over WebSockets.
 					</p>
 				</section>
 
@@ -154,8 +154,7 @@ app.get('/', async (c) => {
 						Built on Cloudflare
 					</h2>
 					<p class="text-center text-sm text-white/60 max-w-2xl mx-auto mb-8">
-						The entire application — from the camera capture to the printed
-						postcard — runs on 10 Cloudflare services.
+						Ten Cloudflare services power the app, from camera capture to printed postcard.
 					</p>
 					<div class="grid sm:grid-cols-2 gap-4">
 						<a href="https://developers.cloudflare.com/workers/" target="_blank" rel="noopener" class="rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/30 transition p-5">
@@ -208,11 +207,7 @@ app.get('/', async (c) => {
 					</h2>
 					<div class="flex flex-col gap-4 max-w-2xl mx-auto">${eventCards}</div>
 				</section>
-			</main>
-
-			<footer class="px-6 sm:px-8 pb-10 text-center text-[11px] uppercase tracking-[0.25em] text-white/30">
-				Built end-to-end on Cloudflare
-			</footer>`,
+			</main>`,
 		),
 	);
 });
