@@ -149,11 +149,10 @@ app.get('/p/:id', async (c) => {
 							<svg class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
 								<path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
 							</svg>
-							<span id="share-label">Share link</span>
+							<span id="share-label">Share</span>
 						</button>
 					</div>
 
-					<p class="text-center text-xs uppercase tracking-[0.2em] text-white/40 mb-3">Share your postcard</p>
 					<div class="flex flex-row gap-3 justify-center mb-12">
 						<a href="${escapeAttr(twitterShareUrl)}" target="_blank" rel="noopener noreferrer"
 							class="inline-flex items-center justify-center gap-2 rounded-full border border-white/20 bg-white/5 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10 active:scale-[0.98] transition">
@@ -177,7 +176,6 @@ app.get('/p/:id', async (c) => {
 							<img src="/cloudflare-logo.png" alt="Cloudflare" class="h-3.5 w-auto opacity-80" />
 							<span>Cloudflare</span>
 						</div>
-						<a href="${basePath}/privacy" class="text-[11px] uppercase tracking-[0.2em] text-white/30 underline underline-offset-2 hover:text-white/50">Privacy</a>
 					</footer>
 				</div>
 			</main>

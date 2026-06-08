@@ -35,7 +35,7 @@ app.get('/kiosk/done', (c) => {
 
 				<section class="flex-1 min-h-0 flex flex-col items-center px-4 sm:px-8 pt-2 pb-4 sm:pb-6 gap-3 sm:gap-4">
 					<h1 class="text-[clamp(1.5rem,4vw,2.25rem)] font-bold leading-tight text-center">
-						Your postcard is ready! 🎉
+						Your postcard is ready!
 					</h1>
 
 					<figure class="w-full max-w-2xl flex-1 min-h-0 flex flex-col justify-center">
