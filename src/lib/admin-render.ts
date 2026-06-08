@@ -116,70 +116,93 @@ export function renderAdminSceneBreakdown(stats: AdminStats): string {
 }
 
 // ---------------------------------------------------------------------------
-// Table rendering
+// Card grid rendering
 // ---------------------------------------------------------------------------
 
-/**
- * Per-row action buttons for the admin sessions table.
- */
-export function renderAdminRowActions(r: AdminSessionRow): string {
-	const buttons: string[] = [];
-	const isCompleted = r.status === 'completed' && !!r.postcardKey;
-	if (isCompleted) {
-		buttons.push(
-			`<button type="button"
-				data-action="retry-print"
-				data-session="${escapeAttr(r.sessionId)}"
-				class="inline-flex items-center rounded-full border border-cf-orange/40 bg-cf-orange/10 px-3 py-1 text-xs text-cf-orange hover:bg-cf-orange/20 hover:border-cf-orange/60 disabled:opacity-50 disabled:cursor-not-allowed transition">
-				🖨️ Retry print
-			</button>`,
-		);
-	}
-	if (r.hasEmail && isCompleted) {
-		buttons.push(
-			`<button type="button"
-				data-action="resend-email"
-				data-session="${escapeAttr(r.sessionId)}"
-				class="inline-flex items-center rounded-full border border-white/15 bg-white/[0.04] px-3 py-1 text-xs text-white/80 hover:border-white/30 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition">
-				📧 Resend email
-			</button>`,
-		);
-	}
-	buttons.push(
-		`<button type="button"
-			data-action="delete-session"
-			data-session="${escapeAttr(r.sessionId)}"
-			class="inline-flex items-center rounded-full border border-red-500/30 bg-red-500/10 px-3 py-1 text-xs text-red-400 hover:bg-red-500/20 hover:border-red-500/50 disabled:opacity-50 disabled:cursor-not-allowed transition">
-			🗑️ Delete
-		</button>`,
-	);
-	return `<div class="inline-flex items-center gap-1.5 justify-end">${buttons.join('')}</div>`;
+/** Build the thumbnail URL for a session's postcard via the admin image proxy. */
+function adminThumbUrl(postcardKey: string): string {
+	return `/api/admin/image?key=${encodeURIComponent(postcardKey)}&w=400`;
 }
 
-export function renderAdminTableBody(rows: AdminSessionRow[]): string {
-	if (rows.length === 0) {
-		return `<tr><td colspan="9" class="px-4 py-8 text-center text-white/40">No sessions yet.</td></tr>`;
+/**
+ * Render a single session card for the admin grid.
+ *
+ * The postcard image is the card's primary visual. Status pill overlays
+ * top-left, timestamp bottom-right, and action buttons appear on hover
+ * via a dark gradient overlay.
+ */
+export function renderAdminCard(r: AdminSessionRow): string {
+	const status = r.status || 'pending';
+	const isCompleted = status === 'completed' && !!r.postcardKey;
+	const isErrored = status === 'errored';
+
+	// Image or placeholder
+	let imageHtml: string;
+	if (isCompleted && r.postcardKey) {
+		imageHtml = `<img src="${escapeAttr(adminThumbUrl(r.postcardKey))}" alt="Postcard" loading="lazy" class="absolute inset-0 w-full h-full object-cover" />`;
+	} else if (isErrored) {
+		imageHtml =
+			`<div class="absolute inset-0 flex flex-col items-center justify-center bg-red-500/10 px-4">` +
+			`<span class="text-3xl mb-2">&#x26A0;</span>` +
+			`<span class="text-xs text-red-300 text-center line-clamp-2">${escapeHtml(r.errorMsg ?? 'Unknown error')}</span>` +
+			`</div>`;
+	} else {
+		imageHtml = `<div class="absolute inset-0 flex items-center justify-center bg-white/5 animate-pulse"><span class="text-2xl text-white/20">&#x23F3;</span></div>`;
 	}
-	return rows
-		.map((r) => {
-			const shortId = r.sessionId.slice(0, 8);
-			const status = r.status || 'pending';
-			const printStatus = r.printStatus ?? '—';
-			return (
-				`<tr class="hover:bg-white/[0.03]">` +
-				`<td class="px-4 py-3 font-mono text-xs text-white/80">${escapeHtml(shortId)}</td>` +
-				`<td class="px-4 py-3 text-white/60 text-xs">${escapeHtml(r.eventId ?? '—')}</td>` +
-				`<td class="px-4 py-3"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs ring-1 ${adminStatusClass(status)}">${escapeHtml(status)}</span></td>` +
-				`<td class="px-4 py-3 text-white/80">${escapeHtml(r.sceneName ?? '—')}</td>` +
-				`<td class="px-4 py-3 text-white/60 whitespace-nowrap">${adminTimeTag(r.createdAt)}</td>` +
-				`<td class="px-4 py-3 text-white/60 whitespace-nowrap">${escapeHtml(adminFmtDuration(r.pipelineDurationMs))}</td>` +
-				`<td class="px-4 py-3 text-white/60">${escapeHtml(r.emailMasked ?? '—')}</td>` +
-				`<td class="px-4 py-3"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs ring-1 ${adminPrintClass(r.printStatus)}">${escapeHtml(printStatus)}</span></td>` +
-				`<td class="px-4 py-3 text-right whitespace-nowrap">${renderAdminRowActions(r)}</td>` +
-				`</tr>`
-			);
-		})
-		.join('');
+
+	// Action buttons (shown on hover via CSS group-hover)
+	const actions: string[] = [];
+	if (isCompleted) {
+		actions.push(
+			`<button type="button" data-action="retry-print" data-session="${escapeAttr(r.sessionId)}" class="inline-flex items-center justify-center size-8 rounded-full bg-cf-orange/80 text-black cursor-pointer hover:bg-cf-orange disabled:opacity-50 disabled:cursor-not-allowed transition" title="Retry print">` +
+			`<svg class="size-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0 .229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0 0 21 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 0 0-1.913-.247M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 0 1 1.913-.247m10.5 0a48.536 48.536 0 0 0-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18.25 7.034v-.534" /></svg>` +
+			`</button>`,
+		);
+	}
+	actions.push(
+		`<button type="button" data-action="delete-session" data-session="${escapeAttr(r.sessionId)}" class="inline-flex items-center justify-center size-8 rounded-full bg-red-500/80 text-white cursor-pointer hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition" title="Delete">` +
+		`<svg class="size-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>` +
+		`</button>`,
+	);
+	actions.push(
+		`<button type="button" data-action="view-details" data-session="${escapeAttr(r.sessionId)}" class="inline-flex items-center justify-center size-8 rounded-full bg-white/20 text-white cursor-pointer hover:bg-white/40 transition" title="View details">` +
+		`<svg class="size-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>` +
+		`</button>`,
+	);
+
+	const detailHref = `/admin/sessions/${escapeAttr(r.sessionId)}`;
+
+	// Card is a <div> (not <a>) so we can nest interactive buttons without
+	// triggering the HTML parser's nested-anchor auto-close, which would hoist
+	// the overlay out of the card. Navigation is handled via JS click.
+	return (
+		`<div class="admin-card group relative aspect-[3/2] rounded-xl overflow-hidden border border-white/10 bg-white/[0.02] hover:scale-[1.02] transition-transform cursor-pointer block" data-session-card="${escapeAttr(r.sessionId)}" data-href="${detailHref}" role="link" tabindex="0">` +
+		// Image layer
+		imageHtml +
+		// Status pill (top-left)
+		`<div class="absolute top-2 left-2 z-10">` +
+		`<span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] ring-1 ${adminStatusClass(status)}">${escapeHtml(status)}</span>` +
+		`</div>` +
+		// Timestamp (bottom-right)
+		`<div class="absolute bottom-2 right-2 z-10">` +
+		`<time data-ts="${r.createdAt ?? 0}" class="text-[10px] text-white/60 bg-black/50 rounded px-1.5 py-0.5">${r.createdAt ? '...' : ''}</time>` +
+		`</div>` +
+		// Hover overlay with action buttons
+		`<div class="admin-card-overlay absolute inset-0 z-20 flex items-start justify-end gap-1.5 p-2 bg-gradient-to-b from-black/60 via-transparent to-transparent transition-opacity pointer-events-none" style="opacity:0">` +
+		actions.map((a) => `<span class="pointer-events-auto">${a}</span>`).join('') +
+		`</div>` +
+		`</div>`
+	);
+}
+
+/**
+ * Render the full card grid for the admin dashboard.
+ */
+export function renderAdminCardGrid(rows: AdminSessionRow[]): string {
+	if (rows.length === 0) {
+		return `<div class="col-span-full py-12 text-center text-white/40">No sessions yet.</div>`;
+	}
+	return rows.map(renderAdminCard).join('');
 }
 
 // ---------------------------------------------------------------------------
