@@ -185,7 +185,7 @@ export function renderAdminCard(r: AdminSessionRow): string {
 		`<time data-ts="${r.createdAt ?? 0}" class="text-[10px] text-white/60 bg-black/50 rounded px-1.5 py-0.5">${r.createdAt ? '...' : ''}</time>` +
 		`</div>` +
 		// Hover overlay with action buttons
-		`<div class="admin-card-overlay absolute inset-0 z-20 flex items-start justify-end gap-1.5 p-2 bg-gradient-to-b from-black/60 via-transparent to-transparent opacity-0 transition-opacity pointer-events-none">` +
+		`<div class="admin-card-overlay absolute inset-0 z-20 flex items-start justify-end gap-1.5 p-2 bg-gradient-to-b from-black/60 via-transparent to-transparent transition-opacity pointer-events-none">` +
 		actions.map((a) => `<span class="pointer-events-auto">${a}</span>`).join('') +
 		`</div>` +
 		`</a>`
