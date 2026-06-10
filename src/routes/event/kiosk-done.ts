@@ -2,11 +2,12 @@ import { Hono } from 'hono';
 import type { EventEnv } from '../../lib/types';
 import { kioskPage } from '../../lib/html';
 import { UUID_RE } from '../../lib/helpers';
+import { idleDialogFragment } from '../../lib/idle-dialog';
 
 const app = new Hono<EventEnv>();
 
 /**
- * Done screen — shows postcard image, QR code, print CTA, 60s countdown.
+ * Done screen — shows postcard image, QR code, print CTA, two-phase idle timer.
  * GET /kiosk/done?session=<sid>
  */
 app.get('/kiosk/done', (c) => {
@@ -60,24 +61,20 @@ app.get('/kiosk/done', (c) => {
 					</div>
 
 					<p id="done-print-error" class="hidden text-sm text-red-400 text-center max-w-lg"></p>
-
-					<div class="flex items-baseline gap-2 text-white/50">
-						<span id="done-countdown-secs" class="text-2xl font-bold tabular-nums text-white/80 leading-none">60</span>
-						<span class="text-sm">s until idle &middot; tap anywhere to reset</span>
-					</div>
 				</section>
 			</main>
+			${idleDialogFragment()}
 			<script>
 			(function () {
 				const basePath = ${JSON.stringify(basePath)};
 				const postcardEl = document.getElementById("done-postcard");
-				const secsEl     = document.getElementById("done-countdown-secs");
 				const restartBtn = document.getElementById("done-restart");
 				const printBtn   = document.getElementById("done-print");
 				const printError = document.getElementById("done-print-error");
 				const root       = document.getElementById("done-root");
 				const sessionId  = ${JSON.stringify(sessionId)};
-				const IDLE_SECS  = 60;
+				const IDLE_TIMEOUT_MS = 15000;
+				const COUNTDOWN_SECS  = 15;
 
 				let payload = null;
 				try {
@@ -176,26 +173,46 @@ app.get('/kiosk/done', (c) => {
 					}
 				});
 
-				let remaining = IDLE_SECS;
-
-				function resetCountdown() { remaining = IDLE_SECS; secsEl.textContent = String(remaining); }
-
 				function returnToIdle() {
 					stopPrintPoll();
+					clearTimeout(idleTimer);
+					if (window.kioskIdleDialog) window.kioskIdleDialog.hide();
 					try { sessionStorage.removeItem("kiosk:selfie"); } catch (e) {}
 					try { sessionStorage.removeItem("kiosk:done"); } catch (e) {}
 					window.location.href = basePath + "/kiosk";
 				}
 
-				root.addEventListener("pointerdown", resetCountdown, { passive: true });
+				var idleTimer = null;
+				var dialogVisible = false;
 
-				const tick = setInterval(function () {
-					remaining -= 1;
-					secsEl.textContent = String(remaining);
-					if (remaining <= 0) { clearInterval(tick); returnToIdle(); }
-				}, 1000);
+				function startIdleTimer() {
+					clearTimeout(idleTimer);
+					idleTimer = setTimeout(showIdleDialog, IDLE_TIMEOUT_MS);
+				}
 
-				restartBtn.addEventListener("click", function () { clearInterval(tick); returnToIdle(); });
+				function resetIdleTimer() {
+					if (!dialogVisible) startIdleTimer();
+				}
+
+				function showIdleDialog() {
+					dialogVisible = true;
+					window.kioskIdleDialog.show({
+						seconds: COUNTDOWN_SECS,
+						onDone: function () { returnToIdle(); },
+						onStay: function () {
+							dialogVisible = false;
+							window.kioskIdleDialog.hide();
+							startIdleTimer();
+						},
+					});
+				}
+
+				root.addEventListener("pointerdown", resetIdleTimer, { passive: true });
+				root.addEventListener("keydown", resetIdleTimer, { passive: true });
+
+				startIdleTimer();
+
+				restartBtn.addEventListener("click", function () { returnToIdle(); });
 			})();
 			</script>`,
 		),
