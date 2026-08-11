@@ -31,7 +31,8 @@ export interface AdminSessionRow {
 	postcardKey: string | null;
 	errorMsg: string | null;
 	/** The event this session belongs to, or null if unassigned. */
-	eventId: string | null;
+	eventId: number | null;
+	eventSlug: string | null;
 }
 
 interface RawSessionRow {
@@ -47,7 +48,8 @@ interface RawSessionRow {
 	error_msg: string | null;
 	print_status: string | null;
 	print_job_id: string | null;
-	event_id: string | null;
+	event_id: number | null;
+	event_slug: string | null;
 }
 
 /**
@@ -75,6 +77,7 @@ export async function loadAdminSessions(env: Env, page = 1): Promise<AdminSessio
 			s.postcard_key,
 			s.error_msg,
 			s.event_id,
+			e.slug AS event_slug,
 			(SELECT pj.status FROM print_jobs pj
 			   WHERE pj.session_id = s.id
 			   ORDER BY pj.created_at DESC LIMIT 1) AS print_status,
@@ -82,6 +85,7 @@ export async function loadAdminSessions(env: Env, page = 1): Promise<AdminSessio
 			   WHERE pj.session_id = s.id
 			   ORDER BY pj.created_at DESC LIMIT 1) AS print_job_id
 		 FROM sessions s
+		 LEFT JOIN events e ON e.id = s.event_id
 		 ORDER BY s.created_at DESC
 		 LIMIT ? OFFSET ?`,
 	)
@@ -105,6 +109,7 @@ export async function loadAdminSessions(env: Env, page = 1): Promise<AdminSessio
 			postcardKey: r.postcard_key,
 			errorMsg: r.error_msg,
 			eventId: r.event_id,
+			eventSlug: r.event_slug,
 		};
 	});
 }
@@ -141,7 +146,8 @@ export interface AdminSessionDetail {
 	caricatureKey: string | null;
 	postcardKey: string | null;
 	errorMsg: string | null;
-	eventId: string | null;
+	eventId: number | null;
+	eventSlug: string | null;
 	workflowInstanceId: string | null;
 	printJobs: AdminPrintJob[];
 }
@@ -159,7 +165,8 @@ interface RawDetailRow {
 	caricature_key: string | null;
 	postcard_key: string | null;
 	error_msg: string | null;
-	event_id: string | null;
+	event_id: number | null;
+	event_slug: string | null;
 	workflow_instance_id: string | null;
 }
 
@@ -179,10 +186,12 @@ interface RawPrintJobRow {
 export async function loadAdminSession(env: Env, sessionId: string): Promise<AdminSessionDetail | null> {
 	const session = await env.DB.prepare(
 		`SELECT
-			id, status, scene_id, scene_name, created_at, completed_at,
-			pipeline_ms, email, selfie_key, caricature_key, postcard_key,
-			error_msg, event_id, workflow_instance_id
-		 FROM sessions WHERE id = ?`,
+			s.id, s.status, s.scene_id, s.scene_name, s.created_at, s.completed_at,
+			s.pipeline_ms, s.email, s.selfie_key, s.caricature_key, s.postcard_key,
+			s.error_msg, s.event_id, e.slug AS event_slug, s.workflow_instance_id
+		 FROM sessions s
+		 LEFT JOIN events e ON e.id = s.event_id
+		 WHERE s.id = ?`,
 	)
 		.bind(sessionId)
 		.first<RawDetailRow>();
@@ -211,6 +220,7 @@ export async function loadAdminSession(env: Env, sessionId: string): Promise<Adm
 		postcardKey: session.postcard_key,
 		errorMsg: session.error_msg,
 		eventId: session.event_id,
+		eventSlug: session.event_slug,
 		workflowInstanceId: session.workflow_instance_id,
 		printJobs: printJobs.map((pj) => ({
 			id: pj.id,

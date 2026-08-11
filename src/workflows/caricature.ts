@@ -6,13 +6,14 @@ import {
 
 import { moderateImage, type ModerationVerdict } from "../lib/moderation";
 import { runReplicate } from "../lib/replicate";
-import { loadEventContext } from "../lib/event-ctx";
+import { resolveEventContext } from "../lib/event-ctx";
 import { buildPostcard } from "../lib/postcard";
 import { trackEvent } from "../lib/analytics";
 import type {
 	MarkStepPayload,
 	SessionStatus,
 } from "../session/session";
+import type { EventContext } from "../lib/types";
 
 /**
  * Payload passed into the workflow when a session starts.
@@ -26,7 +27,7 @@ import type {
  */
 export type CaricaturePayload = {
 	sessionId: string;
-	eventId?: string; // events.id — multi-event scoping
+	eventId?: number | string; // numeric for new jobs; string supports persisted legacy slugs
 	selfieKey?: string; // R2 key under the BUCKET binding
 	sceneId?: string; // id matching scenes.id within the event
 	publicOrigin?: string; // e.g. https://nyc-caricature-booth.examples.workers.dev
@@ -75,7 +76,7 @@ export type StoreStepOutput = {
  */
 export class CaricatureWorkflow extends WorkflowEntrypoint<Env, CaricaturePayload> {
 	async run(event: WorkflowEvent<CaricaturePayload>, step: WorkflowStep) {
-		const { sessionId, eventId, selfieKey, sceneId, publicOrigin, note } = event.payload;
+		const { sessionId, eventId: payloadEventId, selfieKey, sceneId, publicOrigin, note } = event.payload;
 		const instanceId = event.instanceId;
 		// True pipeline start. event.timestamp is the durable instance-creation
 		// time (constant across replays/retries), so computing elapsed against it
@@ -108,7 +109,20 @@ export class CaricatureWorkflow extends WorkflowEntrypoint<Env, CaricaturePayloa
 		// try / catch / finally guarantees a terminal state lands in the DO
 		// (either `done` after store, or `errored` on any throw) and that
 		// the DO is cleaned up afterwards.
+		let eventCtx: EventContext | null = null;
+		let canonicalEventId: number | null = null;
 		try {
+			if (payloadEventId !== undefined) {
+				eventCtx = await resolveEventContext(this.env, payloadEventId);
+				if (!eventCtx) {
+					throw new Error(`event not found: ${payloadEventId}`);
+				}
+				canonicalEventId = eventCtx.event.id;
+			}
+			if (sceneId && !eventCtx) {
+				throw new Error("eventId is required when sceneId is set");
+			}
+
 			// Insert a 'processing' row at the START of the pipeline so D1 has a
 			// real `created_at` (the schema default fires here, not at the final
 			// store). This makes the dashboard's wall-clock fallback meaningful,
@@ -130,7 +144,7 @@ export class CaricatureWorkflow extends WorkflowEntrypoint<Env, CaricaturePayloa
 					)
 						.bind(
 							sessionId,
-							eventId ?? null,
+							canonicalEventId,
 							sceneId ?? null,
 							selfieKey,
 							instanceId,
@@ -199,16 +213,11 @@ export class CaricatureWorkflow extends WorkflowEntrypoint<Env, CaricaturePayloa
 					timeout: "2 minutes",
 				},
 				async () => {
-				// Resolve the scene from the event's D1-backed config. eventId
-				// is required for any real run; only the skeleton test path
-				// (no selfieKey/no sceneId) reaches the workflow without one.
-				if (!eventId) {
-					throw new Error("eventId is required when sceneId is set");
-				}
-				const eventCtx = await loadEventContext(this.env, eventId);
-				if (!eventCtx) throw new Error(`event not found or inactive: ${eventId}`);
+				// The payload event reference was resolved once before the first D1
+				// write, so legacy slug payloads can never reach INTEGER event_id.
+				if (!eventCtx) throw new Error("event context is required when sceneId is set");
 				const scene = eventCtx.scenes.find((s) => s.id === sceneId);
-				if (!scene) throw new Error(`unknown scene_id: ${sceneId} for event ${eventId}`);
+				if (!scene) throw new Error(`unknown scene_id: ${sceneId} for event ${canonicalEventId}`);
 
 				// Compose the final prompt: event-level preamble + scene-specific
 				// prompt + event-level constraints. Each part is optional; empty
@@ -299,10 +308,6 @@ export class CaricatureWorkflow extends WorkflowEntrypoint<Env, CaricaturePayloa
 				// We re-load inside the step rather than passing the EventRecord
 				// through the workflow payload so admin edits to watermark/key
 				// take effect on the very next session — no stale snapshot.
-				const eventCtx = eventId
-					? await loadEventContext(this.env, eventId)
-					: null;
-
 				// QR removed from printed postcard (step 6.6). Users scan the
 				// QR on the kiosk done screen instead; the printed postcard is
 				// just caricature + watermark.
@@ -380,7 +385,7 @@ export class CaricatureWorkflow extends WorkflowEntrypoint<Env, CaricaturePayloa
 					)
 						.bind(
 							sessionId,
-							eventId ?? null,
+							canonicalEventId,
 							generate.sceneId,
 							generate.sceneName,
 							selfieKey,
@@ -431,7 +436,7 @@ export class CaricatureWorkflow extends WorkflowEntrypoint<Env, CaricaturePayloa
 						status='errored',
 						error_msg=excluded.error_msg`,
 				)
-					.bind(sessionId, eventId ?? null, message, sceneId ?? null)
+					.bind(sessionId, canonicalEventId, message, sceneId ?? null)
 					.run();
 			} catch (dbErr) {
 				console.warn(

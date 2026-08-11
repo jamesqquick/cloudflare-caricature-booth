@@ -8,20 +8,20 @@ const app = new Hono<{ Bindings: Env }>();
 
 /**
  * Tabbed event editor — Settings, Branding, Copy, Scenes, Prompts.
- * GET /admin/events/:eventId
+ * GET /admin/events/:eventSlug
  */
-app.get('/admin/events/:eventId', async (c) => {
-	const eventId = c.req.param('eventId');
-	const ev = await loadEvent(c.env, eventId);
+app.get('/admin/events/:eventSlug', async (c) => {
+	const eventSlug = c.req.param('eventSlug');
+	const ev = await loadEvent(c.env, eventSlug);
 	if (!ev) {
 		return c.html(
 			page('Not found', `<main class="min-h-screen flex items-center justify-center"><p class="text-white/60">Event not found.</p></main>`),
 			404,
 		);
 	}
-	const scenes = await loadAllScenes(c.env, eventId);
+	const scenes = await loadAllScenes(c.env, ev.id);
 
-	const countRow = await c.env.DB.prepare(`SELECT COUNT(*) as cnt FROM sessions WHERE event_id = ?`).bind(eventId).first<{ cnt: number }>();
+	const countRow = await c.env.DB.prepare(`SELECT COUNT(*) as cnt FROM sessions WHERE event_id = ?`).bind(ev.id).first<{ cnt: number }>();
 	const sessionCount = countRow?.cnt ?? 0;
 	const canDelete = ev.status === 'draft' && sessionCount === 0;
 
@@ -67,7 +67,7 @@ app.get('/admin/events/:eventId', async (c) => {
 					<form id="settings-form" class="space-y-6 max-w-xl">
 						<div>
 							<label class="block text-xs uppercase tracking-widest text-white/50 mb-1">Slug</label>
-							<input name="id" type="text" value="${escapeAttr(ev.id)}" pattern="[a-z0-9][a-z0-9\\-]{1,62}[a-z0-9]"
+							<input name="slug" type="text" value="${escapeAttr(ev.slug)}" pattern="[a-z0-9][a-z0-9\\-]{1,62}[a-z0-9]"
 								class="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-sm text-white font-mono focus:border-cf-orange/50 focus:outline-none" />
 							<p class="mt-1 text-xs text-white/40">Changing the slug changes all URLs for this event.</p>
 						</div>
@@ -124,7 +124,7 @@ app.get('/admin/events/:eventId', async (c) => {
 									${
 										ev.watermark_image_key
 											? `<div class="inline-flex items-center gap-3 rounded-lg bg-white/5 border border-white/10 p-3">
-											<img src="/api/admin/events/${escapeAttr(ev.id)}/watermark" alt="watermark" class="h-12" />
+											<img src="/api/admin/events/${escapeAttr(ev.slug)}/watermark" alt="watermark" class="h-12" />
 											<button type="button" id="remove-watermark-btn" class="text-xs text-red-400 hover:text-red-300 underline">Remove</button>
 										</div>`
 											: `<p class="text-xs text-white/40 italic">No watermark set.</p>`
@@ -155,7 +155,7 @@ app.get('/admin/events/:eventId', async (c) => {
 									${
 										ev.watermark_image_key_left
 											? `<div class="inline-flex items-center gap-3 rounded-lg bg-white/5 border border-white/10 p-3">
-											<img src="/api/admin/events/${escapeAttr(ev.id)}/watermark-left" alt="watermark left" class="h-12" />
+											<img src="/api/admin/events/${escapeAttr(ev.slug)}/watermark-left" alt="watermark left" class="h-12" />
 											<button type="button" id="remove-watermark-left-btn" class="text-xs text-red-400 hover:text-red-300 underline">Remove</button>
 										</div>`
 											: `<p class="text-xs text-white/40 italic">No watermark set.</p>`
@@ -187,13 +187,13 @@ app.get('/admin/events/:eventId', async (c) => {
 							<div id="postcard-preview" style="position:relative;aspect-ratio:3/2;overflow:hidden;border-radius:0.5rem;border:1px solid rgba(255,255,255,0.1);background-color:#e5e7eb;background-image:repeating-conic-gradient(#d1d5db 0% 25%,#e5e7eb 0% 50%);background-size:16px 16px;">
 								${
 									ev.watermark_image_key
-										? `<img id="preview-wm-right" src="/api/admin/events/${escapeAttr(ev.id)}/watermark"
+										? `<img id="preview-wm-right" src="/api/admin/events/${escapeAttr(ev.slug)}/watermark"
 											style="position:absolute;bottom:${((56 / 1200) * 100).toFixed(2)}%;right:${((56 / 1800) * 100).toFixed(2)}%;width:${(((ev.watermark_w ?? 540) / 1800) * 100).toFixed(2)}%;opacity:0.95;" />`
 										: ''
 								}
 								${
 									ev.watermark_image_key_left
-										? `<img id="preview-wm-left" src="/api/admin/events/${escapeAttr(ev.id)}/watermark-left"
+										? `<img id="preview-wm-left" src="/api/admin/events/${escapeAttr(ev.slug)}/watermark-left"
 											style="position:absolute;bottom:${((56 / 1200) * 100).toFixed(2)}%;left:${((56 / 1800) * 100).toFixed(2)}%;width:${(((ev.watermark_left_w ?? 540) / 1800) * 100).toFixed(2)}%;opacity:0.95;" />`
 										: ''
 								}
@@ -275,7 +275,8 @@ app.get('/admin/events/:eventId', async (c) => {
 			<script id="scenes-data" type="application/json">${scenesJson}</script>
 			<script>
 			(function () {
-				var EVENT_ID = ${JSON.stringify(ev.id)};
+				var EVENT_SLUG = ${JSON.stringify(ev.slug)};
+				var EVENT_NUMERIC_ID = ${JSON.stringify(ev.id)};
 				var notyf = new Notyf({ duration: 3000, position: { x: "right", y: "top" } });
 				function toast(msg, isErr) { notyf[isErr ? "error" : "success"](msg); }
 
@@ -300,7 +301,7 @@ app.get('/admin/events/:eventId', async (c) => {
 
 				// ---- Generic save helper ----
 				function saveFields(fields) {
-					return fetch("/api/admin/events/" + encodeURIComponent(EVENT_ID), {
+					return fetch("/api/admin/events/" + encodeURIComponent(EVENT_SLUG), {
 						method: "PUT",
 						credentials: "same-origin",
 						headers: { "Content-Type": "application/json" },
@@ -308,8 +309,8 @@ app.get('/admin/events/:eventId', async (c) => {
 					}).then(function (r) { return r.json(); })
 					.then(function (j) {
 						if (j.error) throw new Error(j.error);
-						if (fields.id && fields.id !== EVENT_ID) {
-							window.location.href = "/admin/events/" + encodeURIComponent(fields.id);
+						if (fields.slug && fields.slug !== EVENT_SLUG) {
+							window.location.href = "/admin/events/" + encodeURIComponent(fields.slug);
 							return;
 						}
 						toast("Saved");
@@ -321,7 +322,7 @@ app.get('/admin/events/:eventId', async (c) => {
 					e.preventDefault();
 					var f = e.target;
 					saveFields({
-						id: f.querySelector('[name="id"]').value,
+						slug: f.querySelector('[name="slug"]').value,
 						name: f.querySelector('[name="name"]').value,
 						status: f.querySelector('[name="status"]').value,
 						timezone: f.querySelector('[name="timezone"]').value,
@@ -340,7 +341,7 @@ app.get('/admin/events/:eventId', async (c) => {
 						}).then(function (ok) {
 							if (!ok) return;
 							delBtn.disabled = true;
-							fetch("/api/admin/events/" + encodeURIComponent(EVENT_ID), { method: "DELETE", credentials: "same-origin" })
+							fetch("/api/admin/events/" + encodeURIComponent(EVENT_SLUG), { method: "DELETE", credentials: "same-origin" })
 								.then(function (r) { return r.json(); })
 								.then(function (j) {
 									if (j.error) { toast(j.error, true); delBtn.disabled = false; return; }
@@ -368,7 +369,7 @@ app.get('/admin/events/:eventId', async (c) => {
 					var form = e.target;
 					var fd = new FormData(form);
 					if (!fd.get("file") || !fd.get("file").size) { toast("Select a PNG file", true); return; }
-					fetch("/api/admin/events/" + encodeURIComponent(EVENT_ID) + "/watermark", {
+					fetch("/api/admin/events/" + encodeURIComponent(EVENT_SLUG) + "/watermark", {
 						method: "POST", credentials: "same-origin", body: fd,
 					}).then(function (r) { return r.json(); })
 					.then(function (j) {
@@ -383,7 +384,7 @@ app.get('/admin/events/:eventId', async (c) => {
 				if (rmWm) {
 					rmWm.addEventListener("click", function () {
 						rmWm.disabled = true;
-						fetch("/api/admin/events/" + encodeURIComponent(EVENT_ID) + "/watermark", { method: "DELETE", credentials: "same-origin" })
+						fetch("/api/admin/events/" + encodeURIComponent(EVENT_SLUG) + "/watermark", { method: "DELETE", credentials: "same-origin" })
 							.then(function (r) { return r.json(); })
 							.then(function (j) {
 								if (j.error) { toast(j.error, true); rmWm.disabled = false; return; }
@@ -399,7 +400,7 @@ app.get('/admin/events/:eventId', async (c) => {
 					var form = e.target;
 					var fd = new FormData(form);
 					if (!fd.get("file") || !fd.get("file").size) { toast("Select a PNG file", true); return; }
-					fetch("/api/admin/events/" + encodeURIComponent(EVENT_ID) + "/watermark-left", {
+					fetch("/api/admin/events/" + encodeURIComponent(EVENT_SLUG) + "/watermark-left", {
 						method: "POST", credentials: "same-origin", body: fd,
 					}).then(function (r) { return r.json(); })
 					.then(function (j) {
@@ -414,7 +415,7 @@ app.get('/admin/events/:eventId', async (c) => {
 				if (rmWmL) {
 					rmWmL.addEventListener("click", function () {
 						rmWmL.disabled = true;
-						fetch("/api/admin/events/" + encodeURIComponent(EVENT_ID) + "/watermark-left", { method: "DELETE", credentials: "same-origin" })
+						fetch("/api/admin/events/" + encodeURIComponent(EVENT_SLUG) + "/watermark-left", { method: "DELETE", credentials: "same-origin" })
 							.then(function (r) { return r.json(); })
 							.then(function (j) {
 								if (j.error) { toast(j.error, true); rmWmL.disabled = false; return; }
@@ -549,7 +550,7 @@ app.get('/admin/events/:eventId', async (c) => {
 						scenesData[idx] = scenesData[swapIdx];
 						scenesData[swapIdx] = tmp;
 						var reorder = scenesData.map(function (s, i) { return { id: s.id, sort_order: i }; });
-						fetch("/api/admin/events/" + encodeURIComponent(EVENT_ID) + "/scenes/reorder", {
+						fetch("/api/admin/events/" + encodeURIComponent(EVENT_SLUG) + "/scenes/reorder", {
 							method: "PUT", credentials: "same-origin",
 							headers: { "Content-Type": "application/json" },
 							body: JSON.stringify(reorder),
@@ -572,7 +573,7 @@ app.get('/admin/events/:eventId', async (c) => {
 							prompt: card.querySelector('[data-field="prompt"]').value,
 						};
 						saveBtn.disabled = true;
-						fetch("/api/admin/events/" + encodeURIComponent(EVENT_ID) + "/scenes/" + encodeURIComponent(sceneId), {
+						fetch("/api/admin/events/" + encodeURIComponent(EVENT_SLUG) + "/scenes/" + encodeURIComponent(sceneId), {
 							method: "PUT", credentials: "same-origin",
 							headers: { "Content-Type": "application/json" },
 							body: JSON.stringify(body),
@@ -597,7 +598,7 @@ app.get('/admin/events/:eventId', async (c) => {
 						}).then(function (ok) {
 							if (!ok) return;
 							delBtn.disabled = true;
-							fetch("/api/admin/events/" + encodeURIComponent(EVENT_ID) + "/scenes/" + encodeURIComponent(sceneId), {
+							fetch("/api/admin/events/" + encodeURIComponent(EVENT_SLUG) + "/scenes/" + encodeURIComponent(sceneId), {
 								method: "DELETE", credentials: "same-origin",
 							}).then(function (r) { return r.json(); })
 							.then(function (j) {
@@ -617,7 +618,7 @@ app.get('/admin/events/:eventId', async (c) => {
 					if (!toggle) return;
 					var sceneId = toggle.getAttribute("data-active-toggle");
 					var isActive = toggle.checked ? 1 : 0;
-					fetch("/api/admin/events/" + encodeURIComponent(EVENT_ID) + "/scenes/" + encodeURIComponent(sceneId), {
+					fetch("/api/admin/events/" + encodeURIComponent(EVENT_SLUG) + "/scenes/" + encodeURIComponent(sceneId), {
 						method: "PUT", credentials: "same-origin",
 						headers: { "Content-Type": "application/json" },
 						body: JSON.stringify({ is_active: isActive }),
@@ -645,7 +646,7 @@ app.get('/admin/events/:eventId', async (c) => {
 						sort_order: maxSort + 1,
 						is_active: 1,
 					};
-					fetch("/api/admin/events/" + encodeURIComponent(EVENT_ID) + "/scenes", {
+					fetch("/api/admin/events/" + encodeURIComponent(EVENT_SLUG) + "/scenes", {
 						method: "POST", credentials: "same-origin",
 						headers: { "Content-Type": "application/json" },
 						body: JSON.stringify(body),
@@ -653,7 +654,7 @@ app.get('/admin/events/:eventId', async (c) => {
 					.then(function (j) {
 						if (j.error) { toast(j.error, true); return; }
 						scenesData.push({
-							event_id: EVENT_ID, id: body.id, name: body.name, emoji: body.emoji,
+							event_id: EVENT_NUMERIC_ID, id: body.id, name: body.name, emoji: body.emoji,
 							description: body.description, prompt: body.prompt, sort_order: body.sort_order, is_active: body.is_active,
 						});
 						expanded[body.id] = true;

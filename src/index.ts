@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { adminAuthMiddleware } from './lib/admin-auth';
 import { printAgentAuthMiddleware } from './lib/print-agent-auth';
-import { loadEventContext } from './lib/event-ctx';
+import { loadPublicEventContextBySlug } from './lib/event-ctx';
 import { page, escapeAttr } from './lib/html';
 import type { EventEnv } from './lib/types';
 
@@ -82,18 +82,18 @@ app.route('/', adminSessionDetailRoutes);
 
 
 // ---------------------------------------------------------------------------
-// Event-scoped sub-app (/e/:eventId/*)
+// Event-scoped sub-app (/e/:eventSlug/*)
 //
-// Middleware loads EventContext from the :eventId URL param and 404s if the
+// Middleware loads EventContext from the :eventSlug URL param and 404s if the
 // event doesn't exist or isn't active. All user-facing routes live here.
 // ---------------------------------------------------------------------------
 
 const eventApp = new Hono<EventEnv>();
 
 eventApp.use('*', async (c, next) => {
-	const eventId = c.req.param('eventId');
-	if (!eventId) return c.notFound();
-	const ctx = await loadEventContext(c.env, eventId);
+	const eventSlug = c.req.param('eventSlug');
+	if (!eventSlug) return c.notFound();
+	const ctx = await loadPublicEventContextBySlug(c.env, eventSlug);
 	if (!ctx) {
 		return c.html(
 			page(
@@ -102,7 +102,7 @@ eventApp.use('*', async (c, next) => {
 					<div class="text-center max-w-xl">
 						<div class="text-6xl mb-6">🔍</div>
 						<h1 class="text-3xl font-bold mb-3">Event not found</h1>
-						<p class="text-white/60 mb-8">No active event matches <code class="text-cf-orange">${escapeAttr(eventId)}</code>.</p>
+						<p class="text-white/60 mb-8">No active event matches <code class="text-cf-orange">${escapeAttr(eventSlug)}</code>.</p>
 						<a href="/" class="inline-block rounded-full bg-cf-orange px-6 py-3 text-sm font-semibold text-black hover:bg-cf-orange-dark transition">
 							Browse events
 						</a>
@@ -113,7 +113,7 @@ eventApp.use('*', async (c, next) => {
 		);
 	}
 	c.set('eventCtx', ctx);
-	c.set('basePath', `/e/${eventId}`);
+	c.set('basePath', `/e/${ctx.event.slug}`);
 	await next();
 });
 
@@ -132,6 +132,6 @@ eventApp.route('/', sessionWsRoutes);
 eventApp.route('/', pickupRoutes);
 eventApp.route('/', imagesRoutes);
 
-app.route('/e/:eventId', eventApp);
+app.route('/e/:eventSlug', eventApp);
 
 export default app;

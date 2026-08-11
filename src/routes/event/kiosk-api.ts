@@ -115,7 +115,7 @@ app.post('/api/kiosk/print', async (c) => {
 
 	const session = await c.env.DB.prepare('SELECT id, event_id, status, postcard_key, scene_name FROM sessions WHERE id = ?')
 		.bind(sessionId)
-		.first<{ id: string; event_id: string | null; status: string | null; postcard_key: string | null; scene_name: string | null }>();
+		.first<{ id: string; event_id: number | null; status: string | null; postcard_key: string | null; scene_name: string | null }>();
 
 	if (!session) return c.json({ error: 'session not found' }, 404);
 	if (session.status !== 'completed' || !session.postcard_key) {
