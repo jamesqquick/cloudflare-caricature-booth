@@ -3,6 +3,29 @@
 -- migration transaction has rebuilt and renamed every related table.
 PRAGMA defer_foreign_keys = true;
 
+-- Fail before rebuilding if a non-null legacy event slug cannot be mapped.
+-- D1 rolls back the migration transaction when this CHECK constraint fails.
+CREATE TABLE migration_0008_event_reference_guard (
+	is_valid INTEGER NOT NULL CHECK (is_valid = 1)
+);
+
+INSERT INTO migration_0008_event_reference_guard (is_valid)
+SELECT CASE WHEN EXISTS (
+	SELECT 1
+	FROM sessions
+	LEFT JOIN events ON events.id = sessions.event_id
+	WHERE sessions.event_id IS NOT NULL AND events.id IS NULL
+
+	UNION ALL
+
+	SELECT 1
+	FROM print_jobs
+	LEFT JOIN events ON events.id = print_jobs.event_id
+	WHERE print_jobs.event_id IS NOT NULL AND events.id IS NULL
+) THEN 0 ELSE 1 END;
+
+DROP TABLE migration_0008_event_reference_guard;
+
 CREATE TABLE events_new (
 	id                    INTEGER PRIMARY KEY,
 	slug                  TEXT NOT NULL UNIQUE,
@@ -25,7 +48,7 @@ CREATE TABLE events_new (
 );
 
 INSERT INTO events_new (
-	slug, name, status, accent_color,
+	id, slug, name, status, accent_color,
 	watermark_image_key, watermark_image_key_left,
 	tagline, kiosk_idle_subhead, scene_picker_heading,
 	scene_style_preamble, scene_constraints,
@@ -33,13 +56,15 @@ INSERT INTO events_new (
 	watermark_w, watermark_left_w
 )
 SELECT
+	ROW_NUMBER() OVER (ORDER BY id),
 	id, name, status, accent_color,
 	watermark_image_key, watermark_image_key_left,
 	tagline, kiosk_idle_subhead, scene_picker_heading,
 	scene_style_preamble, scene_constraints,
 	timezone, privacy_email, created_at, created_by,
 	watermark_w, watermark_left_w
-FROM events;
+FROM events
+ORDER BY id;
 
 CREATE TABLE scenes_new (
 	event_id    INTEGER NOT NULL,
