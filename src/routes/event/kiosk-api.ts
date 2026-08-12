@@ -24,11 +24,12 @@ app.post('/api/kiosk/selfie', async (c) => {
 
 	const sessionId = crypto.randomUUID();
 	const selfieKey = `kiosk/${sessionId}/selfie.jpg`;
+	const eventId = c.get('eventCtx').event.id;
 
 	const buf = await selfie.arrayBuffer();
 	await c.env.BUCKET.put(selfieKey, buf, {
 		httpMetadata: { contentType: selfie.type || 'image/jpeg' },
-		customMetadata: { sessionId, source: 'kiosk', capturedAt: new Date().toISOString() },
+		customMetadata: { sessionId, eventId, source: 'kiosk', capturedAt: new Date().toISOString() },
 	});
 
 	trackEvent(c.env.ANALYTICS, 'session.created', sessionId);
@@ -77,6 +78,9 @@ app.post('/api/kiosk/start', async (c) => {
 	const head = await c.env.BUCKET.head(selfieKey);
 	if (!head) {
 		return c.json({ error: `selfie not found in R2: ${selfieKey}` }, 404);
+	}
+	if (head.customMetadata?.eventId && head.customMetadata.eventId !== eventCtx.event.id) {
+		return c.json({ error: 'selfie does not belong to this event' }, 400);
 	}
 
 	const basePath = c.get('basePath');

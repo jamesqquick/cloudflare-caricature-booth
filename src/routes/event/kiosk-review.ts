@@ -9,13 +9,14 @@ const app = new Hono<EventEnv>();
  * GET /kiosk/review
  */
 app.get('/kiosk/review', async (c) => {
+	const eventId = c.get('eventCtx').event.id;
 	const basePath = c.get('basePath');
 	return c.html(
 		kioskPage(
 			'Review your postcard',
 			`<main class="min-h-[100dvh] w-full flex flex-col">
 				<header class="shrink-0 px-6 pt-4 sm:pt-8 pb-2 flex items-center justify-between">
-					<a href="${basePath}/kiosk/scene" class="text-sm text-white/50 hover:text-white">← Pick different scene</a>
+					<a href="${basePath}/kiosk?reuseSelfie=1" class="text-sm text-white/50 hover:text-white">← Pick different scene</a>
 					<span class="text-xs uppercase tracking-[0.25em] text-white/40 hidden sm:inline">Step 3 of 3 · Review</span>
 					<span class="w-32"></span>
 				</header>
@@ -54,6 +55,7 @@ app.get('/kiosk/review', async (c) => {
 			<script>
 			(function () {
 				const basePath = ${JSON.stringify(basePath)};
+				const eventId = ${JSON.stringify(eventId)};
 				const selfieEl = document.getElementById("rev-selfie");
 				const emojiEl = document.getElementById("rev-scene-emoji");
 				const nameEl = document.getElementById("rev-scene-name");
@@ -61,17 +63,17 @@ app.get('/kiosk/review', async (c) => {
 				const statusEl = document.getElementById("rev-status");
 
 				const raw = sessionStorage.getItem("kiosk:selfie");
-				if (!raw) { window.location.replace(basePath + "/kiosk/capture"); return; }
+				if (!raw) { window.location.replace(basePath + "/kiosk"); return; }
 				let data;
 				try {
 					data = JSON.parse(raw);
-					if (!data || !data.sessionId || !data.selfieKey) throw new Error("incomplete payload");
+					if (!data || data.eventId !== eventId || !data.sessionId || !data.selfieKey) throw new Error("incomplete payload");
 				} catch (err) {
 					sessionStorage.removeItem("kiosk:selfie");
-					window.location.replace(basePath + "/kiosk/capture");
+					window.location.replace(basePath + "/kiosk");
 					return;
 				}
-				if (!data.sceneId) { window.location.replace(basePath + "/kiosk/scene"); return; }
+				if (!data.sceneId) { window.location.replace(basePath + "/kiosk?reuseSelfie=1"); return; }
 
 				selfieEl.src = basePath + "/api/run-img?key=" + encodeURIComponent(data.selfieKey);
 				nameEl.textContent = data.sceneName || data.sceneId;
@@ -95,6 +97,7 @@ app.get('/kiosk/review', async (c) => {
 						const j = await r.json();
 						if (!r.ok || !j.ok) throw new Error(j.error || "start failed");
 						sessionStorage.removeItem("kiosk:selfie");
+						sessionStorage.removeItem("kiosk:scene");
 						window.location.href = j.statusUrl;
 					} catch (err) {
 						console.error(err);

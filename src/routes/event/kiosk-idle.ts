@@ -9,11 +9,41 @@ const app = new Hono<EventEnv>();
  * GET /kiosk
  */
 app.get('/kiosk', async (c) => {
-	const { event } = c.get('eventCtx');
+	const { event, scenes } = c.get('eventCtx');
 	const basePath = c.get('basePath');
 	const origin = new URL(c.req.url).origin;
 	const qrTarget = `${origin}${basePath}/kiosk`;
 	const qrSrc = `${basePath}/api/kiosk/qr?url=${encodeURIComponent(qrTarget)}`;
+	const reuseSelfie = c.req.query('reuseSelfie') === '1';
+
+	if (scenes.length === 0) {
+		return c.html(
+			kioskPage(
+				`${event.name} — Scenes unavailable`,
+				`<main class="min-h-[100dvh] w-full flex flex-col items-center justify-center px-8 text-center">
+					<div class="text-2xl font-semibold text-red-300">Scenes unavailable</div>
+					<p class="mt-3 text-sm text-white/60 max-w-md">No active scenes found for this event. Please ask a booth attendant for help.</p>
+				</main>`,
+			),
+			500,
+		);
+	}
+
+	const cards = scenes
+		.map(
+			(s) => `<button type="button"
+				data-scene-id="${escapeAttr(s.id)}"
+				data-scene-name="${escapeAttr(s.name)}"
+				data-scene-emoji="${escapeAttr(s.emoji)}"
+				aria-pressed="false"
+				class="scene-card group relative flex min-h-36 flex-col items-start rounded-3xl border border-white/10 bg-white/[0.04] p-4 text-left transition hover:border-white/30 hover:bg-white/[0.08] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-cf-orange sm:min-h-40 sm:p-5">
+				<div class="text-4xl sm:text-5xl leading-none mb-2 sm:mb-3" aria-hidden="true">${escapeAttr(s.emoji)}</div>
+				<div class="text-base sm:text-lg font-semibold leading-tight">${escapeAttr(s.name)}</div>
+				<div class="mt-1 text-xs sm:text-sm text-white/60 leading-snug line-clamp-2">${escapeAttr(s.description)}</div>
+			</button>`,
+		)
+		.join('\n');
+
 	return c.html(
 		kioskPage(
 			`${event.name} — Tap to start`,
@@ -21,25 +51,91 @@ app.get('/kiosk', async (c) => {
 				<img src="${qrSrc}" alt="QR code — scan to start"
 					class="w-20 sm:w-24 rounded-xl border border-white/10 bg-white p-1.5" />
 			</div>
-			<main class="h-full w-full flex flex-col pt-4 sm:pt-10">
-				<section class="flex-1 flex flex-col items-center justify-center px-8 text-center">
+			<main class="min-h-[100dvh] w-full flex flex-col pt-4 sm:pt-8">
+				<section class="flex-1 flex flex-col items-center justify-center px-4 sm:px-8 text-center">
 					<h1 class="text-[clamp(2rem,6vw,3.5rem)] font-bold leading-tight text-balance">
 						AI Caricature Booth
 					</h1>
-					<p class="mt-4 max-w-md text-lg text-white/70 text-balance">
+					<p class="mt-3 max-w-md text-base sm:text-lg text-white/70 text-balance">
 						${escapeAttr(event.tagline)}
 					</p>
 
-					<a href="${basePath}/kiosk/capture"
-						class="mt-16 inline-flex items-center justify-center rounded-full bg-cf-orange px-16 py-7 text-2xl font-bold text-black shadow-[0_0_60px_rgba(246,130,31,0.45)] hover:bg-cf-orange-dark active:scale-[0.98] transition">
+					<div class="mt-6 sm:mt-8 w-full max-w-2xl">
+						<h2 class="text-[clamp(1.35rem,4vw,2rem)] font-bold leading-tight">${escapeAttr(event.scene_picker_heading)}</h2>
+						<p class="mt-1 text-sm sm:text-base text-white/60">Choose where your caricature should take place.</p>
+						<div id="scene-grid" class="mt-4 grid grid-cols-2 gap-3 sm:gap-4">
+							${cards}
+						</div>
+					</div>
+
+					<button id="kiosk-start" type="button" disabled
+						class="mt-7 inline-flex items-center justify-center rounded-full bg-cf-orange px-14 py-5 text-xl sm:px-16 sm:py-6 sm:text-2xl font-bold text-black shadow-[0_0_60px_rgba(246,130,31,0.45)] transition hover:bg-cf-orange-dark active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none">
 						Tap to start
-					</a>
+					</button>
+					<p id="scene-status" role="status" aria-live="polite" class="mt-3 min-h-5 text-sm text-white/50">Choose a scene to continue.</p>
 				</section>
 
-				<footer class="px-8 pt-12 pb-10 text-center text-[11px] uppercase tracking-[0.25em] text-white/30">
+				<footer class="px-8 pt-8 pb-8 text-center text-[11px] uppercase tracking-[0.25em] text-white/30">
 					We don't store your photo after the event · <a href="${basePath}/privacy" class="underline underline-offset-2 hover:text-white/50">Privacy</a>
 				</footer>
-			</main>`,
+			</main>
+			<script>
+			(function () {
+				const basePath = ${JSON.stringify(basePath)};
+				const eventId = ${JSON.stringify(event.id)};
+				const reuseSelfie = ${JSON.stringify(reuseSelfie)};
+				const grid = document.getElementById("scene-grid");
+				const startBtn = document.getElementById("kiosk-start");
+				const statusEl = document.getElementById("scene-status");
+				let selectedScene = null;
+				let reusableSelfie = null;
+
+				sessionStorage.removeItem("kiosk:scene");
+				if (reuseSelfie) {
+					try {
+						const parsed = JSON.parse(sessionStorage.getItem("kiosk:selfie") || "null");
+						if (parsed && parsed.eventId === eventId && parsed.sessionId && parsed.selfieKey) reusableSelfie = parsed;
+					} catch (err) {
+						console.error("bad kiosk:selfie payload:", err);
+					}
+				}
+				if (!reusableSelfie) sessionStorage.removeItem("kiosk:selfie");
+
+				grid.addEventListener("click", function (event) {
+					const card = event.target.closest(".scene-card");
+					if (!card) return;
+					selectedScene = {
+						eventId: eventId,
+						sceneId: card.getAttribute("data-scene-id"),
+						sceneName: card.getAttribute("data-scene-name"),
+						sceneEmoji: card.getAttribute("data-scene-emoji") || "",
+						sceneChosenAt: Date.now(),
+					};
+					grid.querySelectorAll(".scene-card").forEach(function (button) {
+						const active = button === card;
+						button.setAttribute("aria-pressed", active ? "true" : "false");
+						button.classList.toggle("border-cf-orange", active);
+						button.classList.toggle("bg-cf-orange/10", active);
+						button.classList.toggle("ring-2", active);
+						button.classList.toggle("ring-cf-orange", active);
+					});
+					sessionStorage.setItem("kiosk:scene", JSON.stringify(selectedScene));
+					startBtn.disabled = false;
+					statusEl.textContent = selectedScene.sceneName + " selected.";
+				});
+
+				startBtn.addEventListener("click", function () {
+					if (!selectedScene || !selectedScene.sceneId) return;
+					if (reusableSelfie) {
+						sessionStorage.setItem("kiosk:selfie", JSON.stringify(Object.assign({}, reusableSelfie, selectedScene)));
+						sessionStorage.removeItem("kiosk:scene");
+						window.location.href = basePath + "/kiosk/review";
+						return;
+					}
+					window.location.href = basePath + "/kiosk/capture";
+				});
+			})();
+			</script>`,
 		),
 	);
 });

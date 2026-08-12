@@ -5,10 +5,11 @@ import { kioskPage } from '../../lib/html';
 const app = new Hono<EventEnv>();
 
 /**
- * Live camera capture screen (step 1 of 3).
+ * Live camera capture screen (step 2 of 3).
  * GET /kiosk/capture
  */
 app.get('/kiosk/capture', (c) => {
+	const eventId = c.get('eventCtx').event.id;
 	const basePath = c.get('basePath');
 	const origin = new URL(c.req.url).origin;
 	const qrTarget = `${origin}${basePath}/kiosk`;
@@ -23,7 +24,7 @@ app.get('/kiosk/capture', (c) => {
 			<main id="capture-root" class="min-h-[100dvh] h-[100dvh] w-full flex flex-col">
 				<header class="shrink-0 px-6 pt-4 sm:pt-8 pb-2 flex items-center justify-between">
 					<a href="${basePath}/kiosk" class="text-sm text-white/50 hover:text-white sm:pl-32">← Cancel</a>
-					<span class="text-xs uppercase tracking-[0.25em] text-white/40 hidden sm:inline">Step 1 of 3 · Selfie</span>
+					<span class="text-xs uppercase tracking-[0.25em] text-white/40 hidden sm:inline">Step 2 of 3 · Selfie</span>
 					<span class="w-12"></span>
 				</header>
 
@@ -94,6 +95,17 @@ app.get('/kiosk/capture', (c) => {
 			<script>
 			(function () {
 				const basePath = ${JSON.stringify(basePath)};
+				const eventId = ${JSON.stringify(eventId)};
+				let selectedScene;
+				try {
+					selectedScene = JSON.parse(sessionStorage.getItem("kiosk:scene") || "null");
+					if (!selectedScene || selectedScene.eventId !== eventId || !selectedScene.sceneId) throw new Error("incomplete payload");
+				} catch (err) {
+					console.error("bad kiosk:scene payload:", err);
+					sessionStorage.removeItem("kiosk:scene");
+					window.location.replace(basePath + "/kiosk");
+					return;
+				}
 				const video = document.getElementById("cap-video");
 				const preview = document.getElementById("cap-preview");
 				const overlay = document.getElementById("cap-overlay");
@@ -338,13 +350,19 @@ app.get('/kiosk/capture', (c) => {
 						const j = await r.json();
 						if (!r.ok || !j.ok) throw new Error(j.error || "upload failed");
 						sessionStorage.setItem("kiosk:selfie", JSON.stringify({
+							eventId: eventId,
 							sessionId: j.sessionId,
 							selfieKey: j.selfieKey,
 							size: j.size,
 							capturedAt: Date.now(),
+							sceneId: selectedScene.sceneId,
+							sceneName: selectedScene.sceneName,
+							sceneEmoji: selectedScene.sceneEmoji,
+							sceneChosenAt: selectedScene.sceneChosenAt,
 						}));
-						statusEl.textContent = "✓ Uploaded. Pick a scene next…";
-						window.location.href = basePath + "/kiosk/scene";
+						sessionStorage.removeItem("kiosk:scene");
+						statusEl.textContent = "✓ Uploaded. Review your postcard…";
+						window.location.href = basePath + "/kiosk/review";
 					} catch (err) {
 						console.error(err);
 						statusEl.textContent = "✗ " + (err && err.message ? err.message : String(err));
