@@ -6,7 +6,7 @@ import {
 
 import { moderateImage, type ModerationVerdict } from "../lib/moderation";
 import { runReplicate } from "../lib/replicate";
-import { resolveEventContext } from "../lib/event-ctx";
+import { loadEventContext, resolveEventContext } from "../lib/event-ctx";
 import { buildPostcard } from "../lib/postcard";
 import { trackEvent } from "../lib/analytics";
 import type {
@@ -311,8 +311,11 @@ export class CaricatureWorkflow extends WorkflowEntrypoint<Env, CaricaturePayloa
 				// QR removed from printed postcard (step 6.6). Users scan the
 				// QR on the kiosk done screen instead; the printed postcard is
 				// just caricature + watermark.
+				const currentEventCtx = canonicalEventId
+					? await loadEventContext(this.env, canonicalEventId)
+					: null;
 				const response = await buildPostcard(this.env, caricature.body, {
-					event: eventCtx?.event,
+					event: currentEventCtx?.event,
 				});
 					if (!response.ok)
 						throw new Error(`postcard build failed: HTTP ${response.status}`);
