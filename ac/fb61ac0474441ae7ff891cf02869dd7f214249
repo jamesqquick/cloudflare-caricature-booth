@@ -1,0 +1,19 @@
+src/routes/event/kiosk-idle.ts
+  s_1fb4b04a3da96e::t_a8f0802aa831b9 18,65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "acfb61ac0474441ae7ff891cf02869dd7f214249",
+  "prompts": {},
+  "sessions": {
+    "s_1fb4b04a3da96e": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_008bde025ffeOhskUdD3qcLvAB",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "James Quick <jquick@cloudflare.com>"
+    }
+  }
+}
