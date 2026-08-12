@@ -17,15 +17,11 @@ app.get('/kiosk/capture', (c) => {
 		kioskPage(
 			'Capture your selfie',
 			`			<main id="capture-root" class="studio-shell">
-				<aside class="studio-rail">
-					<div class="studio-topbar">
-						<div class="studio-brand">
-							<span class="studio-cloud" aria-hidden="true"></span>
-							<span>Caricature Booth</span>
-						</div>
-						<div class="studio-top-actions">
-							<a href="${basePath}/kiosk" class="studio-mobile-cancel">Cancel</a>
-							<button id="cap-mute" type="button" aria-label="Mute sounds" aria-pressed="false" class="studio-mute">
+				<div class="studio-topbar">
+					<a href="${basePath}/kiosk" class="studio-mobile-cancel">Cancel</a>
+					<div class="studio-utilities">
+						<img src="${qrSrc}" alt="QR code to continue on your phone" class="studio-qr" />
+						<button id="cap-mute" type="button" aria-label="Mute sounds" aria-pressed="false" class="studio-mute">
 								<svg id="cap-sound-on-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 									<path d="M11 5 6 9H2v6h4l5 4V5Z"></path>
 									<path d="M15.5 8.5a5 5 0 0 1 0 7"></path>
@@ -36,24 +32,9 @@ app.get('/kiosk/capture', (c) => {
 									<path d="m22 9-6 6"></path>
 									<path d="m16 9 6 6"></path>
 								</svg>
-							</button>
-						</div>
+						</button>
 					</div>
-
-					<section class="studio-intro" aria-labelledby="capture-heading">
-						<p class="studio-eyebrow">Step 01 / 03</p>
-						<h1 id="capture-heading">Meet your best angle.</h1>
-						<p>Center your face in the frame. Good light and a straight-on pose make the best caricature.</p>
-						<div class="studio-progress" aria-label="Step 1 of 3">
-							<span></span><span></span><span></span>
-						</div>
-					</section>
-
-					<p class="studio-privacy">
-						Your selfie is removed after the event.<br />
-						<a href="${basePath}/privacy">Read our privacy promise</a>
-					</p>
-				</aside>
+				</div>
 
 				<section class="studio-stage" aria-label="Photo capture">
 					<div class="studio-capture">
@@ -76,7 +57,7 @@ app.get('/kiosk/capture', (c) => {
 						</div>
 
 						<div class="studio-controls">
-							<p id="cap-hint" class="studio-hint">Look at the lens, keep your shoulders visible, and hold still.</p>
+							<p id="cap-hint" class="sr-only">Ready to take photo.</p>
 							<div id="cap-shutter-row" class="studio-shutter-row flex">
 								<button id="cap-shutter" type="button" disabled class="studio-shutter">
 									<span class="sr-only">Take photo</span>
@@ -88,12 +69,6 @@ app.get('/kiosk/capture', (c) => {
 								<button id="cap-retake" type="button" class="studio-retake">Retake</button>
 							</div>
 							<p id="cap-status" class="studio-status" aria-live="polite"></p>
-							<a href="${basePath}/kiosk" class="studio-cancel">Cancel session</a>
-							<div class="studio-handoff">
-								<img src="${qrSrc}" alt="QR code to continue on your phone" />
-								<span>Continue on your phone</span>
-							</div>
-							<p class="studio-mobile-privacy">Photo removed after the event · <a href="${basePath}/privacy">Privacy</a></p>
 						</div>
 					</div>
 				</section>
@@ -108,46 +83,25 @@ app.get('/kiosk/capture', (c) => {
 				--studio-orange: oklch(72% 0.19 52);
 				background: var(--studio-ink);
 				color: var(--studio-paper);
-				display: grid;
-				grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr);
 				height: 100dvh;
 				min-height: 100dvh;
 				overflow: hidden;
+				position: relative;
 			}
-			.studio-rail {
-				border-right: 1px solid oklch(96% 0.012 70 / 0.12);
-				display: flex;
-				flex-direction: column;
-				padding: clamp(1.75rem, 3.5vw, 3.5rem);
-			}
-			.studio-topbar { align-items: center; display: flex; gap: 0.5rem; justify-content: space-between; }
-			.studio-top-actions { align-items: center; display: flex; gap: 0.7rem; }
-			.studio-brand {
+			.studio-topbar {
 				align-items: center;
 				display: flex;
-				font-size: 0.95rem;
-				font-weight: 800;
-				gap: 0.7rem;
-				letter-spacing: -0.02em;
-				white-space: nowrap;
-			}
-			.studio-cloud {
-				background: var(--studio-orange);
-				border-radius: 1.1rem 1.1rem 0.45rem 0.45rem;
-				height: 1.35rem;
-				position: relative;
-				width: 2.2rem;
-			}
-			.studio-cloud::before {
-				background: var(--studio-orange);
-				border-radius: 50%;
-				content: "";
-				height: 1.05rem;
-				left: 0.45rem;
+				gap: 0.5rem;
+				justify-content: space-between;
+				left: 0;
+				padding: max(1rem, env(safe-area-inset-top)) 1.25rem 0;
 				position: absolute;
-				top: -0.45rem;
-				width: 1.05rem;
+				right: 0;
+				top: 0;
+				z-index: 30;
 			}
+			.studio-utilities { align-items: center; display: flex; gap: 0.7rem; margin-left: auto; }
+			.studio-qr { background: var(--studio-paper); border-radius: 0.65rem; padding: 0.3rem; width: 3.25rem; }
 			.studio-mobile-cancel { display: none; }
 			.studio-mute {
 				align-items: center;
@@ -165,49 +119,13 @@ app.get('/kiosk/capture', (c) => {
 			.studio-mute svg { height: 1.25rem; width: 1.25rem; }
 			.studio-mute:active { transform: scale(0.95); }
 			.studio-mute.is-muted { background: oklch(72% 0.19 52 / 0.15); border-color: oklch(72% 0.19 52 / 0.5); color: var(--studio-orange); }
-			.studio-intro { margin: auto 0; }
-			.studio-eyebrow {
-				color: var(--studio-orange);
-				font-size: 0.72rem;
-				font-weight: 800;
-				letter-spacing: 0.17em;
-				text-transform: uppercase;
-			}
-			.studio-intro h1 {
-				font-size: clamp(2.2rem, 4vw, 3.75rem);
-				font-weight: 800;
-				letter-spacing: -0.055em;
-				line-height: 0.98;
-				margin: 0.9rem 0 0.8rem;
-				max-width: 9ch;
-			}
-			.studio-intro > p:last-of-type {
-				color: var(--studio-muted);
-				font-size: 0.9rem;
-				line-height: 1.55;
-				max-width: 28ch;
-			}
-			.studio-progress { display: flex; gap: 0.45rem; margin-top: 1.75rem; }
-			.studio-progress span {
-				background: oklch(96% 0.012 70 / 0.15);
-				border-radius: 999px;
-				height: 0.25rem;
-				width: 2.25rem;
-			}
-			.studio-progress span:first-child { background: var(--studio-orange); }
-			.studio-privacy {
-				color: oklch(67% 0.012 70);
-				font-size: 0.7rem;
-				line-height: 1.55;
-			}
-			.studio-privacy a, .studio-mobile-privacy a { text-decoration: underline; text-underline-offset: 0.2rem; }
-			.studio-stage { display: grid; min-width: 0; padding: clamp(1.25rem, 3vw, 2.75rem); place-items: center; }
+			.studio-stage { display: grid; height: 100%; min-width: 0; padding: clamp(1.25rem, 3vw, 2.75rem); place-items: center; }
 			.studio-capture {
 				align-items: center;
-				display: grid;
-				gap: clamp(1.5rem, 4vw, 3.5rem);
-				grid-template-columns: minmax(17.5rem, 38rem) minmax(10.5rem, 15rem);
-				max-width: 62rem;
+				display: flex;
+				flex-direction: column;
+				gap: 1rem;
+				max-width: 38rem;
 				width: 100%;
 			}
 			.studio-viewfinder {
@@ -215,9 +133,11 @@ app.get('/kiosk/capture', (c) => {
 				background: var(--studio-panel);
 				border-radius: 2.15rem;
 				box-shadow: 0 2.2rem 5.5rem oklch(5% 0.01 55 / 0.6);
-				max-height: calc(100dvh - 5rem);
+				height: min(calc(100dvh - 17rem), 42.5rem);
+				max-width: 100%;
 				overflow: hidden;
 				position: relative;
+				width: auto;
 			}
 			.studio-guide-wrap { align-items: center; display: flex; inset: 0; justify-content: center; pointer-events: none; position: absolute; }
 			.studio-guide {
@@ -229,8 +149,7 @@ app.get('/kiosk/capture', (c) => {
 			.studio-corner { border-color: var(--studio-orange); border-style: solid; height: 2rem; position: absolute; width: 2rem; }
 			.studio-corner-top { border-width: 3px 0 0 3px; left: 1.4rem; top: 1.4rem; }
 			.studio-corner-bottom { border-width: 0 3px 3px 0; bottom: 1.4rem; right: 1.4rem; }
-			.studio-controls { align-items: center; display: flex; flex-direction: column; text-align: center; }
-			.studio-hint { color: var(--studio-muted); font-size: 0.88rem; line-height: 1.5; max-width: 22ch; min-height: 2.65rem; }
+			.studio-controls { align-items: center; display: flex; flex-direction: column; text-align: center; width: min(100%, 34rem); }
 			.studio-shutter-row { align-items: center; flex-direction: column; }
 			.studio-shutter {
 				background: var(--studio-orange);
@@ -260,73 +179,28 @@ app.get('/kiosk/capture', (c) => {
 			.studio-use:active, .studio-retake:active { transform: scale(0.98); }
 			.studio-use:disabled, .studio-retake:disabled { cursor: wait; opacity: 0.55; }
 			.studio-status { color: var(--studio-muted); font-size: 0.72rem; line-height: 1rem; margin-top: 0.75rem; min-height: 1rem; }
-			.studio-cancel {
-				align-items: center;
-				color: var(--studio-muted);
-				display: inline-flex;
-				font-size: 0.8rem;
-				justify-content: center;
-				margin-top: 0.75rem;
-				min-height: 2.75rem;
-				text-decoration: underline;
-				text-underline-offset: 0.25rem;
-			}
-			.studio-handoff { align-items: center; display: flex; flex-direction: column; margin-top: 1.25rem; }
-			.studio-handoff img { background: var(--studio-paper); border-radius: 0.75rem; padding: 0.35rem; width: 4.5rem; }
-			.studio-handoff span { color: var(--studio-muted); font-size: 0.67rem; margin-top: 0.45rem; }
-			.studio-mobile-privacy { display: none; }
 			#capture-root button:focus-visible, #capture-root a:focus-visible { outline: 3px solid var(--studio-orange); outline-offset: 4px; }
 			@media (hover: hover) {
 				.studio-shutter:not(:disabled):hover, .studio-use:not(:disabled):hover { filter: brightness(1.08); }
 				.studio-retake:not(:disabled):hover { background: oklch(96% 0.012 70 / 0.08); border-color: oklch(96% 0.012 70 / 0.55); }
 				.studio-mute:hover { background: oklch(96% 0.012 70 / 0.1); border-color: oklch(96% 0.012 70 / 0.3); color: var(--studio-paper); }
 				.studio-mute.is-muted:hover { background: oklch(72% 0.19 52 / 0.22); border-color: var(--studio-orange); color: var(--studio-orange); }
-				.studio-cancel:hover, .studio-privacy a:hover, .studio-mobile-privacy a:hover { color: var(--studio-paper); }
 			}
 
 			@media (max-width: 879px) {
-				#capture-root { display: flex; flex-direction: column; }
-				.studio-rail {
-					align-items: center;
-					border: 0;
-					flex-direction: row;
-					justify-content: space-between;
-					padding: max(0.85rem, env(safe-area-inset-top)) 1.1rem 0.55rem;
-				}
-				.studio-topbar { width: 100%; }
-				.studio-intro {
-					clip: rect(0 0 0 0);
-					clip-path: inset(50%);
-					height: 1px;
-					overflow: hidden;
-					position: absolute;
-					white-space: nowrap;
-					width: 1px;
-				}
-				.studio-privacy { display: none; }
 				.studio-mobile-cancel { align-items: center; color: var(--studio-muted); display: inline-flex; font-size: 0.78rem; min-height: 2.75rem; }
-				.studio-stage { flex: 1; min-height: 0; padding: 0.35rem 1rem max(0.75rem, env(safe-area-inset-bottom)); }
+				.studio-stage { min-height: 0; padding: 5rem 1rem max(0.75rem, env(safe-area-inset-bottom)); }
 				.studio-capture { display: flex; flex-direction: column; gap: 0.75rem; height: 100%; }
-				.studio-viewfinder { flex: 1; max-height: calc(100dvh - 13.75rem); min-height: 0; width: min(100%, 29rem); }
+				.studio-viewfinder { flex: 1; height: auto; max-height: calc(100dvh - 10.75rem); min-height: 0; width: min(100%, 29rem); }
 				.studio-controls { width: min(100%, 29rem); }
-				.studio-hint { font-size: 0.8rem; max-width: 35ch; min-height: 1.25rem; }
-				.studio-shutter { border-width: 6px; height: 4.65rem; margin: 0.6rem 0 0.45rem; width: 4.65rem; }
-				.studio-shutter-label::after { color: var(--studio-muted); content: " · Step 1 of 3"; font-weight: 500; }
+				.studio-shutter { border-width: 6px; height: 4.65rem; margin: 0 0 0.45rem; width: 4.65rem; }
 				.studio-confirm { flex-direction: row; margin-top: 0.5rem; }
 				.studio-use, .studio-retake { flex: 1; }
 				.studio-status { margin-top: 0.35rem; }
-				.studio-cancel, .studio-handoff { display: none; }
-				.studio-mobile-privacy { color: oklch(67% 0.012 70); display: block; font-size: 0.61rem; margin-top: 0.25rem; }
-			}
-			@media (min-width: 600px) and (max-width: 879px) {
-				.studio-handoff { display: flex; flex-direction: row; gap: 0.65rem; margin-top: 0.45rem; }
-				.studio-handoff img { border-radius: 0.55rem; width: 3rem; }
-				.studio-handoff span { margin: 0; }
 			}
 			@media (max-width: 879px) and (orientation: landscape) {
 				.studio-stage { padding-inline: 1.25rem; }
-				.studio-capture { display: grid; gap: 1.5rem; grid-template-columns: minmax(15rem, 1fr) minmax(12rem, 17rem); max-width: 52rem; }
-				.studio-viewfinder { max-height: calc(100dvh - 5.5rem); width: auto; }
+				.studio-viewfinder { max-height: calc(100dvh - 11.5rem); width: auto; }
 				.studio-controls { width: 100%; }
 				.studio-shutter { height: 4.8rem; width: 4.8rem; }
 			}
