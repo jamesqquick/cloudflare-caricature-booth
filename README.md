@@ -118,7 +118,7 @@ migrations/                   — D1 schema migrations
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 22.12+
 - A Cloudflare account with the services listed above provisioned
 - A Replicate API token
 

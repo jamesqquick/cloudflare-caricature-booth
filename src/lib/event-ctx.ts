@@ -6,6 +6,7 @@ import type { EventContext, EventRecord, SceneRecord } from "./types";
 
 const KV_TTL_SECONDS = 60;
 const KV_PREFIX = "event:";
+const DEFAULT_BOOTH_TITLE = "AI Caricature Booth";
 
 // -----------------------------------------------------------------------
 // Public API
@@ -20,12 +21,19 @@ const KV_PREFIX = "event:";
 export async function loadEventContext(
 	env: Env,
 	eventId: string,
+	executionCtx?: Pick<ExecutionContext, "waitUntil">,
 ): Promise<EventContext | null> {
 	const cacheKey = `${KV_PREFIX}${eventId}`;
 
 	// Try KV cache first
 	const cached = await env.CONFIG.get(cacheKey, "json");
-	if (cached) return cached as EventContext;
+	if (cached) {
+		const ctx = cached as EventContext;
+		if (typeof ctx.event.booth_title !== "string") {
+			ctx.event.booth_title = DEFAULT_BOOTH_TITLE;
+		}
+		return ctx;
+	}
 
 	// Miss — query D1
 	const [eventRes, scenesRes] = await env.DB.batch([
@@ -44,10 +52,16 @@ export async function loadEventContext(
 
 	const ctx: EventContext = { event: eventRow, scenes };
 
-	// Populate cache (fire-and-forget)
-	env.CONFIG.put(cacheKey, JSON.stringify(ctx), {
+	const cacheWrite = env.CONFIG.put(cacheKey, JSON.stringify(ctx), {
 		expirationTtl: KV_TTL_SECONDS,
-	}).catch(() => {});
+	});
+	if (executionCtx) {
+		executionCtx.waitUntil(cacheWrite);
+	} else {
+		await cacheWrite.catch((error: unknown) => {
+			console.error("Failed to cache event context", error);
+		});
+	}
 
 	return ctx;
 }

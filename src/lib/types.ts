@@ -19,6 +19,7 @@ export interface EventRecord {
 	watermark_left_w: number | null; // px width for bottom-left watermark (null → default 540)
 
 	// copy
+	booth_title: string;
 	tagline: string;
 	kiosk_idle_subhead: string;
 	scene_picker_heading: string;

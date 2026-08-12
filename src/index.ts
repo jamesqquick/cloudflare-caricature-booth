@@ -93,7 +93,7 @@ const eventApp = new Hono<EventEnv>();
 eventApp.use('*', async (c, next) => {
 	const eventId = c.req.param('eventId');
 	if (!eventId) return c.notFound();
-	const ctx = await loadEventContext(c.env, eventId);
+	const ctx = await loadEventContext(c.env, eventId, c.executionCtx);
 	if (!ctx) {
 		return c.html(
 			page(

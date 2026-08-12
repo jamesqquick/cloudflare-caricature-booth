@@ -35,7 +35,7 @@ app.put('/api/admin/events/:eventId', async (c) => {
 
 	const ALLOWED = new Set([
 		'id', 'name', 'status', 'accent_color', 'watermark_w', 'watermark_left_w',
-		'tagline', 'kiosk_idle_subhead', 'scene_picker_heading',
+		'booth_title', 'tagline', 'kiosk_idle_subhead', 'scene_picker_heading',
 		'scene_style_preamble', 'scene_constraints', 'timezone', 'privacy_email',
 	]);
 
@@ -52,6 +52,14 @@ app.put('/api/admin/events/:eventId', async (c) => {
 			if (!Number.isInteger(n) || n < 100 || n > 900) {
 				return c.json({ error: `${key} must be an integer between 100 and 900, or null` }, 400);
 			}
+		}
+		if (key === 'booth_title') {
+			if (typeof val !== 'string' || !val.trim()) {
+				return c.json({ error: 'Booth title is required' }, 400);
+			}
+			sets.push('booth_title = ?');
+			vals.push(val.trim());
+			continue;
 		}
 		sets.push(`${key} = ?`);
 		vals.push(val === '' ? null : val);
@@ -134,15 +142,16 @@ app.post('/api/admin/events/:eventId/clone', async (c) => {
 
 	await c.env.DB.prepare(
 		`INSERT INTO events (id, name, status, accent_color,
-			tagline, kiosk_idle_subhead, scene_picker_heading,
+			booth_title, tagline, kiosk_idle_subhead, scene_picker_heading,
 			scene_style_preamble, scene_constraints,
 			timezone, privacy_email)
-		 VALUES (?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?)`,
+		 VALUES (?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 	)
 		.bind(
 			newSlug,
 			`${ev.name} (Copy)`,
 			ev.accent_color,
+			ev.booth_title,
 			ev.tagline,
 			ev.kiosk_idle_subhead,
 			ev.scene_picker_heading,

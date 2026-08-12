@@ -218,6 +218,13 @@ app.get('/admin/events/:eventId', async (c) => {
 				<section data-panel="copy" class="tab-panel hidden">
 					<form id="copy-form" class="space-y-6 max-w-xl">
 						<div>
+							<label class="block text-xs uppercase tracking-widest text-white/50 mb-1">Booth title</label>
+							<p class="text-xs text-white/40 mb-2">Shown as the main title on this event's landing and kiosk screens.</p>
+							<input name="booth_title" type="text" value="${escapeAttr(ev.booth_title)}" required
+								placeholder="AI Caricature Booth"
+								class="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-cf-orange/50 focus:outline-none" />
+						</div>
+						<div>
 							<label class="block text-xs uppercase tracking-widest text-white/50 mb-1">Tagline</label>
 							<p class="text-xs text-white/40 mb-2">Shown on the event landing page below the title.</p>
 							<input name="tagline" type="text" value="${escapeAttr(ev.tagline)}"
@@ -464,6 +471,7 @@ app.get('/admin/events/:eventId', async (c) => {
 					e.preventDefault();
 					var f = e.target;
 					saveFields({
+						booth_title: f.querySelector('[name="booth_title"]').value,
 						tagline: f.querySelector('[name="tagline"]').value,
 						kiosk_idle_subhead: f.querySelector('[name="kiosk_idle_subhead"]').value,
 						scene_picker_heading: f.querySelector('[name="scene_picker_heading"]').value,

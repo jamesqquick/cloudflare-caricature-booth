@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import type { EventEnv } from '../../lib/types';
-import { page, escapeAttr } from '../../lib/html';
+import { page, escapeAttr, escapeHtml } from '../../lib/html';
 
 const app = new Hono<EventEnv>();
 
@@ -16,7 +16,7 @@ app.get('/', async (c) => {
 	const qrSrc = `${basePath}/api/kiosk/qr?url=${encodeURIComponent(qrTarget)}`;
 	return c.html(
 		page(
-			`${event.name} — AI Caricature Booth`,
+			escapeHtml(`${event.name} — ${event.booth_title}`),
 			`			<div class="flex justify-center pt-4 sm:fixed sm:top-4 sm:left-4 sm:z-50 sm:pt-0 sm:block">
 				<img src="${qrSrc}" alt="QR code — scan to start"
 					class="w-20 sm:w-24 rounded-xl border border-white/10 bg-white p-1.5" />
@@ -25,7 +25,7 @@ app.get('/', async (c) => {
 				<!-- Hero -->
 				<section class="max-w-4xl mx-auto pt-6 sm:pt-20 flex flex-col items-center text-center">
 					<h1 class="text-[clamp(2rem,5vw,3.5rem)] font-bold leading-tight text-balance">
-						AI Caricature Booth
+						${escapeHtml(event.booth_title)}
 					</h1>
 					<p class="mt-4 max-w-xl text-lg text-white/70 text-balance">
 						${escapeAttr(event.tagline)}

@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import type { EventEnv } from '../../lib/types';
-import { page, escapeAttr } from '../../lib/html';
+import { page, escapeAttr, escapeHtml } from '../../lib/html';
 
 const app = new Hono<EventEnv>();
 
@@ -10,7 +10,7 @@ app.get('/privacy', async (c) => {
 	const basePath = c.get('basePath');
 	return c.html(
 		page(
-			`Privacy — ${event.name} Caricature Booth`,
+			escapeHtml(`Privacy — ${event.name} — ${event.booth_title}`),
 			`<header class="px-6 sm:px-8 py-6 flex items-center justify-between">
 				<a href="${basePath}/" class="flex items-center gap-2 text-sm uppercase tracking-widest text-white/60 hover:text-white transition">
 					<img src="/cloudflare-logo.png" alt="" class="h-5 w-5" />
@@ -20,7 +20,7 @@ app.get('/privacy', async (c) => {
 
 			<main class="max-w-2xl mx-auto px-6 sm:px-8 py-8 pb-20">
 				<h1 class="text-3xl font-bold mb-2">Privacy &amp; Data Handling</h1>
-				<p class="text-sm text-white/50 mb-8">Cloudflare ${escapeAttr(event.name)} — AI Caricature Booth</p>
+				<p class="text-sm text-white/50 mb-8">Cloudflare ${escapeHtml(event.name)} — ${escapeHtml(event.booth_title)}</p>
 
 				<section class="space-y-6 text-white/80 text-sm leading-relaxed">
 					<div>
@@ -79,7 +79,7 @@ app.get('/privacy', async (c) => {
 				</section>
 
 				<div class="mt-12 pt-6 border-t border-white/10 text-xs text-white/40">
-					<p>Cloudflare, Inc. &middot; This notice is specific to the ${escapeAttr(event.name)} AI Caricature Booth activation.</p>
+					<p>Cloudflare, Inc. &middot; This notice is specific to the ${escapeHtml(event.name)} ${escapeHtml(event.booth_title)} activation.</p>
 					<p class="mt-1">For Cloudflare's general privacy policy, visit
 						<a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener" class="text-cf-orange underline underline-offset-2">cloudflare.com/privacypolicy</a>.
 					</p>
