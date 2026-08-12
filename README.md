@@ -171,6 +171,7 @@ Create `print-agent/.env`:
 
 ```
 WORKER_URL=https://your-worker.workers.dev
+EVENT_SLUG=your-event-slug
 PRINT_AGENT_TOKEN=your_admin_password
 PRINTER_DRIVER=dnp
 PRINTER_NAME=DNP_DS620

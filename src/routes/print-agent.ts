@@ -5,29 +5,32 @@ const app = new Hono<{ Bindings: Env }>();
 
 /**
  * Returns pending print jobs for the agent to process.
- * GET /api/print-agent/jobs?limit=5&eventId=<event-slug>
+ * GET /api/print-agent/jobs?limit=5&eventSlug=<event-slug>
  *
- * eventId is required — each print agent is scoped to one event.
+ * eventSlug is required — each print agent is scoped to one event.
  */
 app.get('/api/print-agent/jobs', async (c) => {
-	const eventId = c.req.query('eventId');
-	if (!eventId) {
-		return c.json({ error: 'eventId query param is required' }, 400);
+	const eventSlug = c.req.query('eventSlug') ?? c.req.query('eventId');
+	if (!eventSlug) {
+		return c.json({ error: 'eventSlug query param is required' }, 400);
 	}
 
 	const limit = Math.min(Number(c.req.query('limit')) || 5, 20);
 	const { results } = await c.env.DB.prepare(
-		`SELECT id, session_id, event_id, postcard_key, postcard_url, scene_name, created_at
+		`SELECT print_jobs.id, session_id, event_id, events.slug AS event_slug,
+			postcard_key, postcard_url, scene_name, print_jobs.created_at
 		 FROM print_jobs
-		 WHERE status = 'pending' AND event_id = ?
-		 ORDER BY created_at ASC
+		 JOIN events ON events.id = print_jobs.event_id
+		 WHERE print_jobs.status = 'pending' AND events.slug = ?
+		 ORDER BY print_jobs.created_at ASC
 		 LIMIT ?`,
 	)
-		.bind(eventId, limit)
+		.bind(eventSlug, limit)
 		.all<{
 			id: string;
 			session_id: string;
-			event_id: string;
+			event_id: number;
+			event_slug: string;
 			postcard_key: string;
 			postcard_url: string;
 			scene_name: string;
