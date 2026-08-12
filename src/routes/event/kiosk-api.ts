@@ -44,7 +44,7 @@ app.post('/api/kiosk/selfie', async (c) => {
 });
 
 /**
- * Kicks off the caricature workflow from the review screen.
+ * Kicks off the caricature workflow after the kiosk selfie is approved.
  * POST /api/kiosk/start  body: { sessionId, selfieKey, sceneId }
  */
 app.post('/api/kiosk/start', async (c) => {

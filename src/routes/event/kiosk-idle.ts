@@ -14,7 +14,6 @@ app.get('/kiosk', async (c) => {
 	const origin = new URL(c.req.url).origin;
 	const qrTarget = `${origin}${basePath}/kiosk`;
 	const qrSrc = `${basePath}/api/kiosk/qr?url=${encodeURIComponent(qrTarget)}`;
-	const reuseSelfie = c.req.query('reuseSelfie') === '1';
 	const sceneGridColumns = scenes.length === 1 ? 'grid-cols-1' : 'grid-cols-2';
 
 	if (scenes.length === 0) {
@@ -77,22 +76,12 @@ app.get('/kiosk', async (c) => {
 			(function () {
 				const basePath = ${JSON.stringify(basePath)};
 				const eventId = ${JSON.stringify(event.id)};
-				const reuseSelfie = ${JSON.stringify(reuseSelfie)};
 				const grid = document.getElementById("scene-grid");
 				const startBtn = document.getElementById("kiosk-start");
 				let selectedScene = null;
-				let reusableSelfie = null;
 
 				sessionStorage.removeItem("kiosk:scene");
-				if (reuseSelfie) {
-					try {
-						const parsed = JSON.parse(sessionStorage.getItem("kiosk:selfie") || "null");
-						if (parsed && parsed.eventId === eventId && parsed.sessionId && parsed.selfieKey) reusableSelfie = parsed;
-					} catch (err) {
-						console.error("bad kiosk:selfie payload:", err);
-					}
-				}
-				if (!reusableSelfie) sessionStorage.removeItem("kiosk:selfie");
+				sessionStorage.removeItem("kiosk:selfie");
 
 				grid.addEventListener("click", function (event) {
 					const card = event.target.closest(".scene-card");
@@ -118,12 +107,6 @@ app.get('/kiosk', async (c) => {
 
 				startBtn.addEventListener("click", function () {
 					if (!selectedScene || !selectedScene.sceneId) return;
-					if (reusableSelfie) {
-						sessionStorage.setItem("kiosk:selfie", JSON.stringify(Object.assign({}, reusableSelfie, selectedScene)));
-						sessionStorage.removeItem("kiosk:scene");
-						window.location.href = basePath + "/kiosk/review";
-						return;
-					}
 					window.location.href = basePath + "/kiosk/capture";
 				});
 			})();

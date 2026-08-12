@@ -5,7 +5,7 @@ import { kioskPage } from '../../lib/html';
 const app = new Hono<EventEnv>();
 
 /**
- * Live camera capture screen (step 2 of 3).
+ * Live camera capture screen (step 2 of 2).
  * GET /kiosk/capture
  */
 app.get('/kiosk/capture', (c) => {
@@ -24,7 +24,7 @@ app.get('/kiosk/capture', (c) => {
 			<main id="capture-root" class="min-h-[100dvh] h-[100dvh] w-full flex flex-col">
 				<header class="shrink-0 px-6 pt-4 sm:pt-8 pb-2 flex items-center justify-between">
 					<a href="${basePath}/kiosk" class="text-sm text-white/50 hover:text-white sm:pl-32">← Cancel</a>
-					<span class="text-xs uppercase tracking-[0.25em] text-white/40 hidden sm:inline">Step 2 of 3 · Selfie</span>
+					<span class="text-xs uppercase tracking-[0.25em] text-white/40 hidden sm:inline">Step 2 of 2 · Selfie</span>
 					<span class="w-12"></span>
 				</header>
 
@@ -62,7 +62,7 @@ app.get('/kiosk/capture', (c) => {
 					<div id="cap-confirm-row" class="hidden flex-col gap-2 sm:gap-3 items-stretch max-w-md mx-auto">
 						<button id="cap-use"
 							class="rounded-full bg-cf-orange px-8 py-3 sm:py-5 text-base sm:text-xl font-bold text-black shadow-[0_0_40px_rgba(246,130,31,0.45)] hover:bg-cf-orange-dark active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed transition">
-							Use this photo
+							Generate
 						</button>
 						<button id="cap-retake"
 							class="rounded-full border border-white/30 px-8 py-2.5 sm:py-4 text-sm sm:text-base text-white/80 hover:border-white/60 hover:text-white active:scale-[0.98] transition">
@@ -70,9 +70,6 @@ app.get('/kiosk/capture', (c) => {
 						</button>
 					</div>
 					<p id="cap-status" class="mt-2 sm:mt-4 text-center text-[11px] sm:text-xs text-white/40 min-h-[1rem]"></p>
-					<p class="mt-2 text-center text-[10px] uppercase tracking-[0.2em] text-white/25">
-						We don't store your photo after the event · <a href="${basePath}/privacy" class="underline underline-offset-2 hover:text-white/40">Privacy</a>
-					</p>
 				</footer>
 			</main>
 
@@ -120,6 +117,7 @@ app.get('/kiosk/capture', (c) => {
 				let stream = null;
 				let capturedBlob = null;
 				let capturedUrl = null;
+				let uploadedSelfie = null;
 				let countdownTimer = null;
 				const countdownEl = document.getElementById("cap-countdown");
 				const countdownNum = document.getElementById("cap-countdown-num");
@@ -327,6 +325,7 @@ app.get('/kiosk/capture', (c) => {
 
 				async function retake() {
 					capturedBlob = null;
+					uploadedSelfie = null;
 					if (capturedUrl) { URL.revokeObjectURL(capturedUrl); capturedUrl = null; }
 					preview.classList.add("hidden");
 					video.classList.remove("hidden");
@@ -344,25 +343,30 @@ app.get('/kiosk/capture', (c) => {
 					retakeBtn.disabled = true;
 					statusEl.textContent = "Uploading…";
 					try {
-						const fd = new FormData();
-						fd.append("selfie", capturedBlob, "selfie.jpg");
-						const r = await fetch(basePath + "/api/kiosk/selfie", { method: "POST", body: fd });
-						const j = await r.json();
-						if (!r.ok || !j.ok) throw new Error(j.error || "upload failed");
-						sessionStorage.setItem("kiosk:selfie", JSON.stringify({
-							eventId: eventId,
-							sessionId: j.sessionId,
-							selfieKey: j.selfieKey,
-							size: j.size,
-							capturedAt: Date.now(),
-							sceneId: selectedScene.sceneId,
-							sceneName: selectedScene.sceneName,
-							sceneEmoji: selectedScene.sceneEmoji,
-							sceneChosenAt: selectedScene.sceneChosenAt,
-						}));
+						if (!uploadedSelfie) {
+							const fd = new FormData();
+							fd.append("selfie", capturedBlob, "selfie.jpg");
+							const uploadResponse = await fetch(basePath + "/api/kiosk/selfie", { method: "POST", body: fd });
+							const uploadData = await uploadResponse.json();
+							if (!uploadResponse.ok || !uploadData.ok) throw new Error(uploadData.error || "upload failed");
+							uploadedSelfie = { sessionId: uploadData.sessionId, selfieKey: uploadData.selfieKey };
+						}
+
+						statusEl.textContent = "Starting generation…";
+						const startResponse = await fetch(basePath + "/api/kiosk/start", {
+							method: "POST",
+							headers: { "content-type": "application/json" },
+							body: JSON.stringify({
+								sessionId: uploadedSelfie.sessionId,
+								selfieKey: uploadedSelfie.selfieKey,
+								sceneId: selectedScene.sceneId,
+							}),
+						});
+						const startData = await startResponse.json();
+						if (!startResponse.ok || !startData.ok) throw new Error(startData.error || "start failed");
 						sessionStorage.removeItem("kiosk:scene");
-						statusEl.textContent = "✓ Uploaded. Review your postcard…";
-						window.location.href = basePath + "/kiosk/review";
+						sessionStorage.removeItem("kiosk:selfie");
+						window.location.href = startData.statusUrl;
 					} catch (err) {
 						console.error(err);
 						statusEl.textContent = "✗ " + (err && err.message ? err.message : String(err));
