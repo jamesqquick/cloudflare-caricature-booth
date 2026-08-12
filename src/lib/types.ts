@@ -7,7 +7,8 @@
  */
 
 export interface EventRecord {
-	id: string;
+	id: number;
+	slug: string;
 	name: string;
 	status: "draft" | "active" | "archived";
 
@@ -36,7 +37,7 @@ export interface EventRecord {
 }
 
 export interface SceneRecord {
-	event_id: string;
+	event_id: number;
 	id: string;
 	name: string;
 	emoji: string;
@@ -57,7 +58,7 @@ export interface EventContext {
 
 /**
  * Variables set by the event middleware and available on c.get() / c.var
- * inside the /e/:eventId sub-app.
+ * inside the /e/:eventSlug sub-app.
  */
 export type EventVars = {
 	eventCtx: EventContext;

@@ -18,13 +18,16 @@ const printer = createPrinter(process.env.PRINTER_DRIVER, process.env.PRINTER_NA
 // CLI flag parsing
 // ---------------------------------------------------------------------------
 
-function parseCliFlags(): { eventId?: string } {
+function parseCliFlags(): { eventSlug?: string } {
 	const args = process.argv.slice(2);
-	const flags: { eventId?: string } = {};
+	const flags: { eventSlug?: string } = {};
 
 	for (let i = 0; i < args.length; i++) {
-		if (args[i] === "--event-id" && args[i + 1]) {
-			flags.eventId = args[++i];
+		if (
+			(args[i] === "--event-slug" || args[i] === "--event-id") &&
+			args[i + 1]
+		) {
+			flags.eventSlug = args[++i];
 		}
 	}
 
@@ -45,12 +48,12 @@ function loadConfig(): AgentConfig {
 		process.exit(1);
 	}
 
-	// --event-id flag takes precedence over EVENT_ID env var
-	const eventId = flags.eventId || process.env.EVENT_ID;
-	if (!eventId) {
-		console.error("Missing required --event-id flag or EVENT_ID env var.");
-		console.error("Usage: npm start -- --event-id <event-slug>");
-		console.error("Example: npm start -- --event-id nyc-2025");
+	// --event-slug flag takes precedence over EVENT_SLUG env var
+	const eventSlug = flags.eventSlug || process.env.EVENT_SLUG || process.env.EVENT_ID;
+	if (!eventSlug) {
+		console.error("Missing required --event-slug flag or EVENT_SLUG env var.");
+		console.error("Usage: npm start -- --event-slug <event-slug>");
+		console.error("Example: npm start -- --event-slug nyc-2025");
 		process.exit(1);
 	}
 
@@ -63,7 +66,7 @@ function loadConfig(): AgentConfig {
 
 	return {
 		workerUrl: workerUrl.replace(/\/$/, ""),
-		eventId,
+		eventSlug,
 		pollIntervalMs: Number(process.env.POLL_INTERVAL_MS) || 5000,
 		batchSize: Number(process.env.BATCH_SIZE) || 5,
 		printAgentToken,
@@ -82,7 +85,7 @@ function loadConfig(): AgentConfig {
  * a genuine failure (postcard missing, R2 outage, etc.) should surface here.
  */
 async function downloadPostcard(config: AgentConfig, postcardKey: string): Promise<Uint8Array> {
-	const url = `${config.workerUrl}/e/${config.eventId}/api/run-img?key=${encodeURIComponent(postcardKey)}`;
+	const url = `${config.workerUrl}/e/${config.eventSlug}/api/run-img?key=${encodeURIComponent(postcardKey)}`;
 	const delays = [500, 1500, 4000];
 	let lastErr: unknown;
 
@@ -109,14 +112,14 @@ async function downloadPostcard(config: AgentConfig, postcardKey: string): Promi
 
 async function handleJob(config: AgentConfig, job: PrintJob): Promise<void> {
 	console.log(
-		`  [job] id=${job.id} session=${job.session_id} event=${job.event_id} scene="${job.scene_name}" postcard=${job.postcard_key}`,
+		`  [job] id=${job.id} session=${job.session_id} event=${job.event_slug} (${job.event_id}) scene="${job.scene_name}" postcard=${job.postcard_key}`,
 	);
 
-	// Defense in depth: even though the server filters by event_id,
+	// Defense in depth: even though the server filters by event slug,
 	// reject jobs that don't match this agent's configured event.
-	if (job.event_id !== config.eventId) {
+	if (job.event_slug !== config.eventSlug) {
 		throw new Error(
-			`Event mismatch: job event_id="${job.event_id}" but agent configured for "${config.eventId}"`,
+			`Event mismatch: job event_slug="${job.event_slug}" but agent configured for "${config.eventSlug}"`,
 		);
 	}
 
@@ -200,7 +203,7 @@ async function main() {
 
 	console.log("=== Caricature Booth — Print Agent ===");
 	console.log(`  worker:     ${config.workerUrl}`);
-	console.log(`  event:      ${config.eventId}`);
+	console.log(`  event:      ${config.eventSlug}`);
 	console.log(`  printer:    ${printer.name}`);
 	console.log(`  poll every: ${config.pollIntervalMs}ms`);
 	console.log(`  batch size: ${config.batchSize}`);

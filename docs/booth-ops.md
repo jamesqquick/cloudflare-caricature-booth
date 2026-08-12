@@ -20,8 +20,8 @@ landscape 4×6" PDF, and sends it to the printer through CUPS.
 `WORKER_URL` is the base URL for all
 three things it does:
 
-1. **Fetch jobs** — `GET {WORKER_URL}/api/print-agent/jobs?eventId=<slug>&limit=N`
-2. **Download the postcard image** — `GET {WORKER_URL}/e/{eventId}/api/run-img?key=<postcard_key>`
+1. **Fetch jobs** — `GET {WORKER_URL}/api/print-agent/jobs?eventSlug=<slug>&limit=N`
+2. **Download the postcard image** — `GET {WORKER_URL}/e/{eventSlug}/api/run-img?key=<postcard_key>`
 3. **Acknowledge results** — `POST {WORKER_URL}/api/print-agent/jobs/{id}/ack`
 
 ## Prerequisites
@@ -54,7 +54,7 @@ cp .env.example .env
 | Variable           | Required | Default       | Notes                                                                                 |
 | ------------------ | -------- | ------------- | ------------------------------------------------------------------------------------- |
 | `WORKER_URL`       | **Yes**  | —             | Base URL of the deployed Worker. Agent exits on startup if missing.                   |
-| `EVENT_ID`         | **Yes**  | —             | Event slug this agent prints for. Agent exits if missing. Can be passed as a CLI flag. |
+| `EVENT_SLUG`       | **Yes**  | —             | Event slug this agent prints for. Agent exits if missing. Can be passed as a CLI flag. |
 | `PRINT_AGENT_TOKEN`| **Yes**  | —             | Bearer token for the print-queue API. Must equal the Worker's `ADMIN_PASSWORD`. Agent exits if missing. |
 | `PRINTER_DRIVER`   | No       | `mock`        | Set to `dnp` to actually print on the DS620A. `mock` does **not** print.              |
 | `PRINTER_NAME`     | No       | `DNP_DS620`   | CUPS queue name (from `lpstat -p -d`). Only used when `PRINTER_DRIVER=dnp`.            |
@@ -65,7 +65,7 @@ A working booth `.env` looks like:
 
 ```
 WORKER_URL=https://caricature-booth.examples.workers.dev
-EVENT_ID=nyc-tech-week-2026
+EVENT_SLUG=nyc-tech-week-2026
 PRINT_AGENT_TOKEN=your_admin_password
 PRINTER_DRIVER=dnp
 PRINTER_NAME=DNP_DS620
@@ -73,8 +73,8 @@ PRINTER_NAME=DNP_DS620
 
 > **Three things that will bite you:**
 >
-> - **`EVENT_ID` is required.** Without it (or the `--event-id` flag) the agent
->   exits immediately with "Missing required --event-id flag or EVENT_ID env var."
+> - **`EVENT_SLUG` is required.** Without it (or the `--event-slug` flag) the agent
+>   exits immediately with "Missing required --event-slug flag or EVENT_SLUG env var."
 > - **`PRINT_AGENT_TOKEN` is required and must match the Worker's `ADMIN_PASSWORD`.**
 >   If it's missing the agent exits on startup; if it's wrong every poll fails
 >   with HTTP 401.
@@ -93,10 +93,10 @@ npm start
 Or override the event without editing `.env`:
 
 ```bash
-npm start -- --event-id nyc-tech-week-2026
+npm start -- --event-slug nyc-tech-week-2026
 ```
 
-The `--event-id` flag takes precedence over the `EVENT_ID` env var. There is no
+The `--event-slug` flag takes precedence over the `EVENT_SLUG` env var. There is no
 build step — the agent runs the TypeScript directly. It runs in the foreground;
 press **Ctrl+C** to stop.
 
@@ -134,7 +134,7 @@ agent's `.env` (or rotate the Worker secret) so the two values are identical.
 **Jobs aren't printing (no errors)**
 
 - `PRINTER_DRIVER` is still `mock` — switch to `dnp`.
-- `EVENT_ID` doesn't match the event the attendees are using. The agent only
+- `EVENT_SLUG` doesn't match the event the attendees are using. The agent only
   pulls jobs for its configured event and rejects mismatched ones.
 
 **Jobs fail at the print step**
@@ -147,8 +147,8 @@ agent's `.env` (or rotate the Worker secret) so the two values are identical.
 **Agent won't start**
 
 - "Missing required env var: WORKER_URL" — set `WORKER_URL` in `.env`.
-- "Missing required --event-id flag or EVENT_ID env var" — set `EVENT_ID` in
-  `.env` or pass `--event-id <slug>`.
+- "Missing required --event-slug flag or EVENT_SLUG env var" — set `EVENT_SLUG` in
+  `.env` or pass `--event-slug <slug>`.
 - "Missing required env var: PRINT_AGENT_TOKEN" — set `PRINT_AGENT_TOKEN` in
   `.env` to the Worker's `ADMIN_PASSWORD` value.
 
@@ -160,7 +160,7 @@ queues a fresh print job the agent will pick up on its next poll.
 
 **Endpoints the agent uses**
 
-- `GET /api/print-agent/jobs?eventId=<slug>&limit=N` — fetch pending jobs.
+- `GET /api/print-agent/jobs?eventSlug=<slug>&limit=N` — fetch pending jobs.
 - `POST /api/print-agent/jobs/:id/ack` — body `{ "status": "printed" }` or
   `{ "status": "failed", "error": "reason" }`.
 
