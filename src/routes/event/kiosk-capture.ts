@@ -16,25 +16,39 @@ app.get('/kiosk/capture', (c) => {
 	return c.html(
 		kioskPage(
 			'Capture your selfie',
-			`			<div class="flex justify-center pt-4 sm:fixed sm:top-4 sm:left-4 sm:z-50 sm:pt-0 sm:block">
-				<img src="${qrSrc}" alt="QR code — scan to open this page"
-					class="w-20 sm:w-24 rounded-xl border border-white/10 bg-white p-1.5" />
-			</div>
-			<main id="capture-root" class="min-h-[100dvh] h-[100dvh] w-full flex flex-col">
-				<header class="shrink-0 px-6 pt-4 sm:pt-8 pb-2 flex items-center justify-between">
-					<a href="${basePath}/kiosk" class="text-sm text-white/50 hover:text-white sm:pl-32">← Cancel</a>
-					<span class="text-xs uppercase tracking-[0.25em] text-white/40 hidden sm:inline">Step 1 of 3 · Selfie</span>
-					<span class="w-12"></span>
-				</header>
+			`			<main id="capture-root" class="studio-shell">
+				<aside class="studio-rail">
+					<div class="studio-brand">
+						<span class="studio-cloud" aria-hidden="true"></span>
+						<span>Caricature Booth</span>
+					</div>
+					<a href="${basePath}/kiosk" class="studio-mobile-cancel">Cancel</a>
 
-				<section class="flex-1 min-h-0 flex flex-col items-center justify-center px-4 sm:px-6 py-2 gap-3">
-					<div class="relative h-full w-full max-w-[640px] max-h-full flex items-center justify-center">
-						<div class="relative h-full max-h-full aspect-[3/4] rounded-[2.5rem] overflow-hidden bg-black/60 ring-1 ring-white/10 shadow-[0_0_60px_rgba(246,130,31,0.15)]">
+					<section class="studio-intro" aria-labelledby="capture-heading">
+						<p class="studio-eyebrow">Step 01 / 03</p>
+						<h1 id="capture-heading">Meet your best angle.</h1>
+						<p>Center your face in the frame. Good light and a straight-on pose make the best caricature.</p>
+						<div class="studio-progress" aria-label="Step 1 of 3">
+							<span></span><span></span><span></span>
+						</div>
+					</section>
+
+					<p class="studio-privacy">
+						Your selfie is removed after the event.<br />
+						<a href="${basePath}/privacy">Read our privacy promise</a>
+					</p>
+				</aside>
+
+				<section class="studio-stage" aria-label="Photo capture">
+					<div class="studio-capture">
+						<div class="studio-viewfinder">
 							<video id="cap-video" class="absolute inset-0 h-full w-full object-cover -scale-x-100" playsinline muted autoplay></video>
 							<img id="cap-preview" class="absolute inset-0 h-full w-full object-cover hidden -scale-x-100" alt="captured frame" />
-							<div class="absolute inset-0 pointer-events-none flex items-center justify-center">
-								<div class="size-[78%] rounded-full border-2 border-white/30 mix-blend-screen"></div>
+							<div class="studio-guide-wrap" aria-hidden="true">
+								<div class="studio-guide"></div>
 							</div>
+							<span class="studio-corner studio-corner-top" aria-hidden="true"></span>
+							<span class="studio-corner studio-corner-bottom" aria-hidden="true"></span>
 							<div id="cap-flash" class="absolute inset-0 bg-white pointer-events-none z-20 opacity-0 hidden"></div>
 							<div id="cap-countdown" class="absolute inset-0 hidden flex items-center justify-center pointer-events-none z-10">
 								<span id="cap-countdown-num" class="text-[10rem] sm:text-[12rem] font-black text-white drop-shadow-[0_0_40px_rgba(255,255,255,0.5)] leading-none countdown-pop"></span>
@@ -44,38 +58,240 @@ app.get('/kiosk/capture', (c) => {
 								<p class="mt-2 text-sm text-white/60">If you see a permissions prompt, tap Allow.</p>
 							</div>
 						</div>
-					</div>
 
-					<p id="cap-hint" class="shrink-0 text-xs sm:text-sm text-white/60 text-center max-w-md">
-						Frame your face inside the circle. Tap the shutter when you're ready.
-					</p>
+						<div class="studio-controls">
+							<p id="cap-hint" class="studio-hint">Look at the lens, keep your shoulders visible, and hold still.</p>
+							<div id="cap-shutter-row" class="studio-shutter-row flex">
+								<button id="cap-shutter" type="button" disabled class="studio-shutter">
+									<span class="sr-only">Take photo</span>
+								</button>
+								<span class="studio-shutter-label">Take photo</span>
+							</div>
+							<div id="cap-confirm-row" class="studio-confirm hidden flex-col">
+								<button id="cap-use" type="button" class="studio-use">Use this photo</button>
+								<button id="cap-retake" type="button" class="studio-retake">Retake</button>
+							</div>
+							<p id="cap-status" class="studio-status" aria-live="polite"></p>
+							<a href="${basePath}/kiosk" class="studio-cancel">Cancel session</a>
+							<div class="studio-handoff">
+								<img src="${qrSrc}" alt="QR code to continue on your phone" />
+								<span>Continue on your phone</span>
+							</div>
+							<p class="studio-mobile-privacy">Photo removed after the event · <a href="${basePath}/privacy">Privacy</a></p>
+						</div>
+					</div>
 				</section>
-
-				<footer class="shrink-0 px-6 pt-2 pb-4 sm:pb-8" style="padding-bottom: max(1rem, env(safe-area-inset-bottom));">
-					<div id="cap-shutter-row" class="flex items-center justify-center">
-						<button id="cap-shutter" disabled
-							class="size-16 sm:size-24 rounded-full bg-white border-[5px] sm:border-[6px] border-white/30 shadow-[0_0_40px_rgba(255,255,255,0.35)] disabled:opacity-40 disabled:shadow-none active:scale-95 transition">
-							<span class="sr-only">Take photo</span>
-						</button>
-					</div>
-					<div id="cap-confirm-row" class="hidden flex-col gap-2 sm:gap-3 items-stretch max-w-md mx-auto">
-						<button id="cap-use"
-							class="rounded-full bg-cf-orange px-8 py-3 sm:py-5 text-base sm:text-xl font-bold text-black shadow-[0_0_40px_rgba(246,130,31,0.45)] hover:bg-cf-orange-dark active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed transition">
-							Use this photo
-						</button>
-						<button id="cap-retake"
-							class="rounded-full border border-white/30 px-8 py-2.5 sm:py-4 text-sm sm:text-base text-white/80 hover:border-white/60 hover:text-white active:scale-[0.98] transition">
-							Retake
-						</button>
-					</div>
-					<p id="cap-status" class="mt-2 sm:mt-4 text-center text-[11px] sm:text-xs text-white/40 min-h-[1rem]"></p>
-					<p class="mt-2 text-center text-[10px] uppercase tracking-[0.2em] text-white/25">
-						We don't store your photo after the event · <a href="${basePath}/privacy" class="underline underline-offset-2 hover:text-white/40">Privacy</a>
-					</p>
-				</footer>
 			</main>
 
 			<style>
+			#capture-root {
+				--studio-ink: oklch(16% 0.012 55);
+				--studio-panel: oklch(20% 0.014 55);
+				--studio-paper: oklch(96% 0.012 70);
+				--studio-muted: oklch(72% 0.012 70);
+				--studio-orange: oklch(72% 0.19 52);
+				background: var(--studio-ink);
+				color: var(--studio-paper);
+				display: grid;
+				grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr);
+				height: 100dvh;
+				min-height: 100dvh;
+				overflow: hidden;
+			}
+			.studio-rail {
+				border-right: 1px solid oklch(96% 0.012 70 / 0.12);
+				display: flex;
+				flex-direction: column;
+				padding: clamp(1.75rem, 3.5vw, 3.5rem);
+			}
+			.studio-brand {
+				align-items: center;
+				display: flex;
+				font-size: 0.95rem;
+				font-weight: 800;
+				gap: 0.7rem;
+				letter-spacing: -0.02em;
+			}
+			.studio-cloud {
+				background: var(--studio-orange);
+				border-radius: 1.1rem 1.1rem 0.45rem 0.45rem;
+				height: 1.35rem;
+				position: relative;
+				width: 2.2rem;
+			}
+			.studio-cloud::before {
+				background: var(--studio-orange);
+				border-radius: 50%;
+				content: "";
+				height: 1.05rem;
+				left: 0.45rem;
+				position: absolute;
+				top: -0.45rem;
+				width: 1.05rem;
+			}
+			.studio-mobile-cancel { display: none; }
+			.studio-intro { margin: auto 0; }
+			.studio-eyebrow {
+				color: var(--studio-orange);
+				font-size: 0.72rem;
+				font-weight: 800;
+				letter-spacing: 0.17em;
+				text-transform: uppercase;
+			}
+			.studio-intro h1 {
+				font-size: clamp(2.2rem, 4vw, 3.75rem);
+				font-weight: 800;
+				letter-spacing: -0.055em;
+				line-height: 0.98;
+				margin: 0.9rem 0 0.8rem;
+				max-width: 9ch;
+			}
+			.studio-intro > p:last-of-type {
+				color: var(--studio-muted);
+				font-size: 0.9rem;
+				line-height: 1.55;
+				max-width: 28ch;
+			}
+			.studio-progress { display: flex; gap: 0.45rem; margin-top: 1.75rem; }
+			.studio-progress span {
+				background: oklch(96% 0.012 70 / 0.15);
+				border-radius: 999px;
+				height: 0.25rem;
+				width: 2.25rem;
+			}
+			.studio-progress span:first-child { background: var(--studio-orange); }
+			.studio-privacy {
+				color: oklch(67% 0.012 70);
+				font-size: 0.7rem;
+				line-height: 1.55;
+			}
+			.studio-privacy a, .studio-mobile-privacy a { text-decoration: underline; text-underline-offset: 0.2rem; }
+			.studio-stage { display: grid; min-width: 0; padding: clamp(1.25rem, 3vw, 2.75rem); place-items: center; }
+			.studio-capture {
+				align-items: center;
+				display: grid;
+				gap: clamp(1.5rem, 4vw, 3.5rem);
+				grid-template-columns: minmax(17.5rem, 38rem) minmax(10.5rem, 15rem);
+				max-width: 62rem;
+				width: 100%;
+			}
+			.studio-viewfinder {
+				aspect-ratio: 4 / 5;
+				background: var(--studio-panel);
+				border-radius: 2.15rem;
+				box-shadow: 0 2.2rem 5.5rem oklch(5% 0.01 55 / 0.6);
+				max-height: calc(100dvh - 5rem);
+				overflow: hidden;
+				position: relative;
+			}
+			.studio-guide-wrap { align-items: center; display: flex; inset: 0; justify-content: center; pointer-events: none; position: absolute; }
+			.studio-guide {
+				border: 2px solid oklch(96% 0.012 70 / 0.7);
+				border-radius: 48% 48% 44% 44%;
+				height: 68%;
+				width: 70%;
+			}
+			.studio-corner { border-color: var(--studio-orange); border-style: solid; height: 2rem; position: absolute; width: 2rem; }
+			.studio-corner-top { border-width: 3px 0 0 3px; left: 1.4rem; top: 1.4rem; }
+			.studio-corner-bottom { border-width: 0 3px 3px 0; bottom: 1.4rem; right: 1.4rem; }
+			.studio-controls { align-items: center; display: flex; flex-direction: column; text-align: center; }
+			.studio-hint { color: var(--studio-muted); font-size: 0.88rem; line-height: 1.5; max-width: 22ch; min-height: 2.65rem; }
+			.studio-shutter-row { align-items: center; flex-direction: column; }
+			.studio-shutter {
+				background: var(--studio-orange);
+				border: 7px solid var(--studio-paper);
+				border-radius: 50%;
+				box-shadow: 0 0 0 7px oklch(96% 0.012 70 / 0.13), 0 1.1rem 2.8rem oklch(5% 0.01 55 / 0.45);
+				cursor: pointer;
+				height: clamp(5rem, 9vw, 6.5rem);
+				margin: 1.5rem 0 1rem;
+				transition: opacity 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+				width: clamp(5rem, 9vw, 6.5rem);
+			}
+			.studio-shutter:active { transform: scale(0.95); }
+			.studio-shutter:disabled { box-shadow: none; cursor: wait; opacity: 0.4; }
+			.studio-shutter-label { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; }
+			.studio-confirm { gap: 0.75rem; margin-top: 1.25rem; width: 100%; }
+			.studio-use, .studio-retake {
+				border-radius: 999px;
+				cursor: pointer;
+				font-weight: 750;
+				min-height: 3.25rem;
+				padding: 0.75rem 1.25rem;
+				transition: background-color 180ms ease, border-color 180ms ease, filter 180ms ease, opacity 180ms ease, transform 180ms ease;
+			}
+			.studio-use { background: var(--studio-orange); color: var(--studio-ink); }
+			.studio-retake { border: 1px solid oklch(96% 0.012 70 / 0.3); color: var(--studio-paper); }
+			.studio-use:active, .studio-retake:active { transform: scale(0.98); }
+			.studio-use:disabled, .studio-retake:disabled { cursor: wait; opacity: 0.55; }
+			.studio-status { color: var(--studio-muted); font-size: 0.72rem; line-height: 1rem; margin-top: 0.75rem; min-height: 1rem; }
+			.studio-cancel {
+				align-items: center;
+				color: var(--studio-muted);
+				display: inline-flex;
+				font-size: 0.8rem;
+				justify-content: center;
+				margin-top: 0.75rem;
+				min-height: 2.75rem;
+				text-decoration: underline;
+				text-underline-offset: 0.25rem;
+			}
+			.studio-handoff { align-items: center; display: flex; flex-direction: column; margin-top: 1.25rem; }
+			.studio-handoff img { background: var(--studio-paper); border-radius: 0.75rem; padding: 0.35rem; width: 4.5rem; }
+			.studio-handoff span { color: var(--studio-muted); font-size: 0.67rem; margin-top: 0.45rem; }
+			.studio-mobile-privacy { display: none; }
+			#capture-root button:focus-visible, #capture-root a:focus-visible { outline: 3px solid var(--studio-orange); outline-offset: 4px; }
+			@media (hover: hover) {
+				.studio-shutter:not(:disabled):hover, .studio-use:not(:disabled):hover { filter: brightness(1.08); }
+				.studio-retake:not(:disabled):hover { background: oklch(96% 0.012 70 / 0.08); border-color: oklch(96% 0.012 70 / 0.55); }
+				.studio-cancel:hover, .studio-privacy a:hover, .studio-mobile-privacy a:hover { color: var(--studio-paper); }
+			}
+
+			@media (max-width: 879px) {
+				#capture-root { display: flex; flex-direction: column; }
+				.studio-rail {
+					align-items: center;
+					border: 0;
+					flex-direction: row;
+					justify-content: space-between;
+					padding: max(0.85rem, env(safe-area-inset-top)) 1.1rem 0.55rem;
+				}
+				.studio-intro {
+					clip: rect(0 0 0 0);
+					clip-path: inset(50%);
+					height: 1px;
+					overflow: hidden;
+					position: absolute;
+					white-space: nowrap;
+					width: 1px;
+				}
+				.studio-privacy { display: none; }
+				.studio-mobile-cancel { align-items: center; color: var(--studio-muted); display: inline-flex; font-size: 0.78rem; min-height: 2.75rem; }
+				.studio-stage { flex: 1; min-height: 0; padding: 0.35rem 1rem max(0.75rem, env(safe-area-inset-bottom)); }
+				.studio-capture { display: flex; flex-direction: column; gap: 0.75rem; height: 100%; }
+				.studio-viewfinder { flex: 1; max-height: calc(100dvh - 13.75rem); min-height: 0; width: min(100%, 29rem); }
+				.studio-controls { width: min(100%, 29rem); }
+				.studio-hint { font-size: 0.8rem; max-width: 35ch; min-height: 1.25rem; }
+				.studio-shutter { border-width: 6px; height: 4.65rem; margin: 0.6rem 0 0.45rem; width: 4.65rem; }
+				.studio-shutter-label::after { color: var(--studio-muted); content: " · Step 1 of 3"; font-weight: 500; }
+				.studio-confirm { flex-direction: row; margin-top: 0.5rem; }
+				.studio-use, .studio-retake { flex: 1; }
+				.studio-status { margin-top: 0.35rem; }
+				.studio-cancel, .studio-handoff { display: none; }
+				.studio-mobile-privacy { color: oklch(67% 0.012 70); display: block; font-size: 0.61rem; margin-top: 0.25rem; }
+			}
+			@media (min-width: 600px) and (max-width: 879px) {
+				.studio-handoff { display: flex; flex-direction: row; gap: 0.65rem; margin-top: 0.45rem; }
+				.studio-handoff img { border-radius: 0.55rem; width: 3rem; }
+				.studio-handoff span { margin: 0; }
+			}
+			@media (max-width: 879px) and (orientation: landscape) {
+				.studio-stage { padding-inline: 1.25rem; }
+				.studio-capture { display: grid; gap: 1.5rem; grid-template-columns: minmax(15rem, 1fr) minmax(12rem, 17rem); max-width: 52rem; }
+				.studio-viewfinder { max-height: calc(100dvh - 5.5rem); width: auto; }
+				.studio-controls { width: 100%; }
+				.studio-shutter { height: 4.8rem; width: 4.8rem; }
+			}
 			@keyframes countdown-pop {
 				0% { transform: scale(0.5); opacity: 0; }
 				20% { transform: scale(1.15); opacity: 1; }
