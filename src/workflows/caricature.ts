@@ -6,7 +6,7 @@ import {
 
 import { moderateImage, type ModerationVerdict } from "../lib/moderation";
 import { runReplicate } from "../lib/replicate";
-import { loadEventContext, resolveEventContext } from "../lib/event-ctx";
+import { refreshEventContext, resolveEventContext } from "../lib/event-ctx";
 import { buildPostcard } from "../lib/postcard";
 import { trackEvent } from "../lib/analytics";
 import type {
@@ -58,6 +58,11 @@ export type CompositeStepOutput = {
 export type StoreStepOutput = {
 	sessionId: string;
 	rowsWritten: number;
+};
+
+type EventIdentityStepOutput = {
+	eventId: number;
+	eventCtx: EventContext;
 };
 
 /**
@@ -113,11 +118,32 @@ export class CaricatureWorkflow extends WorkflowEntrypoint<Env, CaricaturePayloa
 		let canonicalEventId: number | null = null;
 		try {
 			if (payloadEventId !== undefined) {
-				eventCtx = await resolveEventContext(this.env, payloadEventId);
-				if (!eventCtx) {
-					throw new Error(`event not found: ${payloadEventId}`);
-				}
-				canonicalEventId = eventCtx.event.id;
+				const identity: EventIdentityStepOutput = await step.do(
+					"resolve-event-identity",
+					{
+						retries: { limit: 3, delay: "1 second", backoff: "exponential" },
+						timeout: "30 seconds",
+					},
+					async () => {
+						let resolved = await resolveEventContext(this.env, payloadEventId);
+						if (!resolved && typeof payloadEventId === "string") {
+							const existingSession = await this.env.DB.prepare(
+								`SELECT event_id FROM sessions WHERE id = ? AND event_id IS NOT NULL`,
+							)
+								.bind(sessionId)
+								.first<{ event_id: number }>();
+							if (existingSession) {
+								resolved = await refreshEventContext(this.env, existingSession.event_id);
+							}
+						}
+						if (!resolved) {
+							throw new Error(`event not found: ${payloadEventId}`);
+						}
+						return { eventId: resolved.event.id, eventCtx: resolved };
+					},
+				);
+				eventCtx = identity.eventCtx;
+				canonicalEventId = identity.eventId;
 			}
 			if (sceneId && !eventCtx) {
 				throw new Error("eventId is required when sceneId is set");
@@ -127,8 +153,9 @@ export class CaricatureWorkflow extends WorkflowEntrypoint<Env, CaricaturePayloa
 			// real `created_at` (the schema default fires here, not at the final
 			// store). This makes the dashboard's wall-clock fallback meaningful,
 			// fixes the always-0ms duration bug, and lets in-flight sessions show
-			// up in the admin view before they complete. ON CONFLICT DO NOTHING so
-			// a workflow re-run never resets created_at or clobbers later state.
+			// up in the admin view before they complete. A kiosk upload creates the
+			// pending row first; only that state can be promoted to processing so a
+			// workflow replay cannot clobber a later state.
 			await step.do(
 				"init-session-row",
 				{
@@ -140,7 +167,14 @@ export class CaricatureWorkflow extends WorkflowEntrypoint<Env, CaricaturePayloa
 						`INSERT INTO sessions
 							(id, event_id, status, scene_id, selfie_key, workflow_instance_id)
 						 VALUES (?, ?, 'processing', ?, ?, ?)
-						 ON CONFLICT(id) DO NOTHING`,
+					 ON CONFLICT(id) DO UPDATE SET
+						event_id=excluded.event_id,
+						status='processing',
+						scene_id=excluded.scene_id,
+						selfie_key=excluded.selfie_key,
+						workflow_instance_id=excluded.workflow_instance_id
+					 WHERE sessions.status = 'pending'
+						AND sessions.event_id IS excluded.event_id`,
 					)
 						.bind(
 							sessionId,
@@ -309,7 +343,7 @@ export class CaricatureWorkflow extends WorkflowEntrypoint<Env, CaricaturePayloa
 				// QR on the kiosk done screen instead; the printed postcard is
 				// just caricature + watermark.
 				const currentEventCtx = canonicalEventId
-					? await loadEventContext(this.env, canonicalEventId)
+					? await refreshEventContext(this.env, canonicalEventId)
 					: null;
 				if (!currentEventCtx) {
 					throw new Error(`event not found: ${canonicalEventId}`);

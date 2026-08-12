@@ -30,6 +30,16 @@ app.post('/api/kiosk/selfie', async (c) => {
 		httpMetadata: { contentType: selfie.type || 'image/jpeg' },
 		customMetadata: { sessionId, source: 'kiosk', capturedAt: new Date().toISOString() },
 	});
+	try {
+		await c.env.DB.prepare(
+			`INSERT INTO sessions (id, event_id, status, selfie_key) VALUES (?, ?, 'pending', ?)`,
+		)
+			.bind(sessionId, c.get('eventCtx').event.id, selfieKey)
+			.run();
+	} catch (err) {
+		await c.env.BUCKET.delete(selfieKey).catch(() => {});
+		throw err;
+	}
 
 	trackEvent(c.env.ANALYTICS, 'session.created', sessionId);
 
@@ -73,6 +83,12 @@ app.post('/api/kiosk/start', async (c) => {
 	if (!eventCtx.scenes.some((s) => s.id === sceneId)) {
 		return c.json({ error: `unknown sceneId: ${sceneId} for event ${eventCtx.event.id}` }, 400);
 	}
+	const session = await c.env.DB.prepare(
+		'SELECT 1 FROM sessions WHERE id = ? AND event_id = ? AND selfie_key = ?',
+	)
+		.bind(sessionId, eventCtx.event.id, selfieKey)
+		.first();
+	if (!session) return c.json({ error: 'session not found' }, 404);
 
 	const head = await c.env.BUCKET.head(selfieKey);
 	if (!head) {

@@ -16,6 +16,39 @@ function slugKey(eventSlug: string): string {
 	return `${SLUG_PREFIX}${eventSlug}`;
 }
 
+async function rebuildEventContext(
+	env: Env,
+	event: EventRecord,
+): Promise<EventContext> {
+	const { results } = await env.DB.prepare(
+		`SELECT * FROM scenes WHERE event_id = ? AND is_active = 1 ORDER BY sort_order`,
+	)
+		.bind(event.id)
+		.all<SceneRecord>();
+	const ctx: EventContext = { event, scenes: results };
+
+	void env.CONFIG.put(contextKey(event.id), JSON.stringify(ctx), {
+		expirationTtl: KV_TTL_SECONDS,
+	}).catch(() => {});
+
+	return ctx;
+}
+
+async function loadEventContextBySlug(
+	env: Env,
+	eventSlug: string,
+	activeOnly: boolean,
+): Promise<EventContext | null> {
+	const event = await env.DB.prepare(
+		`SELECT * FROM events WHERE slug = ?${activeOnly ? " AND status = 'active'" : ""}`,
+	)
+		.bind(eventSlug)
+		.first<EventRecord>();
+	if (!event) return null;
+
+	return rebuildEventContext(env, event);
+}
+
 // -----------------------------------------------------------------------
 // Public API
 // -----------------------------------------------------------------------
@@ -50,21 +83,27 @@ export async function loadEventContext(
 	const eventRow = eventRes.results[0] as EventRecord | undefined;
 	if (!eventRow) return null;
 
-	const scenes = (scenesRes.results ?? []) as SceneRecord[];
+	const ctx: EventContext = {
+		event: eventRow,
+		scenes: (scenesRes.results ?? []) as SceneRecord[],
+	};
 
-	const ctx: EventContext = { event: eventRow, scenes };
-
-	// Cache ownership is canonical by numeric ID; slug entries only point to it.
-	void Promise.all([
-		env.CONFIG.put(cacheKey, JSON.stringify(ctx), {
-			expirationTtl: KV_TTL_SECONDS,
-		}),
-		env.CONFIG.put(slugKey(eventRow.slug), JSON.stringify(eventRow.id), {
-			expirationTtl: KV_TTL_SECONDS,
-		}),
-	]).catch(() => {});
+	void env.CONFIG.put(cacheKey, JSON.stringify(ctx), {
+		expirationTtl: KV_TTL_SECONDS,
+	}).catch(() => {});
 
 	return ctx;
+}
+
+/** Rebuild an event context from authoritative D1 state, bypassing KV. */
+export async function refreshEventContext(
+	env: Env,
+	eventId: number,
+): Promise<EventContext | null> {
+	const event = await env.DB.prepare(`SELECT * FROM events WHERE id = ?`)
+		.bind(eventId)
+		.first<EventRecord>();
+	return event ? rebuildEventContext(env, event) : null;
 }
 
 /** Load an active public event by its mutable URL slug. */
@@ -72,26 +111,7 @@ export async function loadPublicEventContextBySlug(
 	env: Env,
 	eventSlug: string,
 ): Promise<EventContext | null> {
-	const cachedId = await env.CONFIG.get(slugKey(eventSlug), "json");
-	if (typeof cachedId === "number") {
-		const cachedCtx = await loadEventContext(env, cachedId);
-		if (
-			cachedCtx?.event.slug === eventSlug &&
-			cachedCtx.event.status === "active"
-		) {
-			return cachedCtx;
-		}
-		await env.CONFIG.delete(slugKey(eventSlug));
-	}
-
-	const event = await env.DB.prepare(
-		`SELECT * FROM events WHERE slug = ? AND status = 'active'`,
-	)
-		.bind(eventSlug)
-		.first<EventRecord>();
-	if (!event) return null;
-
-	return loadEventContext(env, event.id);
+	return loadEventContextBySlug(env, eventSlug, true);
 }
 
 /** Resolve new numeric and legacy slug workflow event references. */
@@ -100,8 +120,7 @@ export async function resolveEventContext(
 	eventId: number | string,
 ): Promise<EventContext | null> {
 	if (typeof eventId === "number") return loadEventContext(env, eventId);
-	const event = await loadEvent(env, eventId);
-	return event ? loadEventContext(env, event.id) : null;
+	return loadEventContextBySlug(env, eventId, false);
 }
 
 /**
@@ -149,22 +168,8 @@ export async function loadEvent(
 	env: Env,
 	eventSlug: string,
 ): Promise<EventRecord | null> {
-	const cachedId = await env.CONFIG.get(slugKey(eventSlug), "json");
-	if (typeof cachedId === "number") {
-		const cachedCtx = await loadEventContext(env, cachedId);
-		if (cachedCtx?.event.slug === eventSlug) return cachedCtx.event;
-		await env.CONFIG.delete(slugKey(eventSlug));
-	}
-
-	const event = await env.DB.prepare(
-		`SELECT * FROM events WHERE slug = ?`,
-	)
-		.bind(eventSlug)
-		.first<EventRecord>();
-	if (!event) return null;
-
-	const ctx = await loadEventContext(env, event.id);
-	return ctx?.event ?? event;
+	const ctx = await loadEventContextBySlug(env, eventSlug, false);
+	return ctx?.event ?? null;
 }
 
 /**
