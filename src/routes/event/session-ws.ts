@@ -14,6 +14,13 @@ app.get('/api/session/:id/ws', async (c) => {
 	if (c.req.header('Upgrade') !== 'websocket') {
 		return c.json({ error: 'expected websocket upgrade' }, 426);
 	}
+	const eventId = c.get('eventCtx').event.id;
+	const session = await c.env.DB.prepare(
+		'SELECT 1 FROM sessions WHERE id = ? AND event_id = ?',
+	)
+		.bind(id, eventId)
+		.first();
+	if (!session) return c.json({ error: 'session not found' }, 404);
 	const stub = getSessionStub(c.env, id);
 	return stub.fetch(c.req.raw);
 });

@@ -11,7 +11,7 @@ app.get('/admin/events', async (c) => {
 	const events = await listEvents(c.env);
 
 	const countRows = await c.env.DB.prepare(`SELECT event_id, COUNT(*) as cnt FROM sessions GROUP BY event_id`).all<{
-		event_id: string | null;
+		event_id: number | null;
 		cnt: number;
 	}>();
 	const counts = new Map(countRows.results.map((r) => [r.event_id, r.cnt]));
@@ -20,29 +20,29 @@ app.get('/admin/events', async (c) => {
 		.map((ev) => {
 			const cnt = counts.get(ev.id) ?? 0;
 			const canDelete = ev.status === 'draft' && cnt === 0;
-			return `<div class="px-4 py-3 hover:bg-white/[0.03] border-b border-white/5 last:border-b-0" data-event-card="${escapeAttr(ev.id)}">
+			return `<div class="px-4 py-3 hover:bg-white/[0.03] border-b border-white/5 last:border-b-0" data-event-card="${escapeAttr(ev.slug)}">
 				<div class="flex items-center gap-3 flex-wrap">
-					<a href="/e/${escapeAttr(ev.id)}" target="_blank" rel="noopener"
+					<a href="/e/${escapeAttr(ev.slug)}" target="_blank" rel="noopener"
 						class="font-semibold text-sm text-white hover:text-cf-orange transition inline-flex items-center gap-1.5">
 						${escapeHtml(ev.name)} <span class="text-xs">\u2197</span>
 					</a>
 					${eventStatusPill(ev.status)}
-					<span class="hidden sm:inline font-mono text-xs text-white/40">${escapeHtml(ev.id)}</span>
+					<span class="hidden sm:inline font-mono text-xs text-white/40">${escapeHtml(ev.slug)}</span>
 					<span class="hidden sm:inline text-white/40 text-xs">\u00B7</span>
 					<span class="hidden sm:inline text-white/50 text-xs">${cnt} session${cnt !== 1 ? 's' : ''}</span>
 				</div>
 				<div class="flex items-center gap-1.5 mt-2">
-					<a href="/admin/events/${escapeAttr(ev.id)}" aria-label="Edit event" data-tooltip="Edit"
+					<a href="/admin/events/${escapeAttr(ev.slug)}" aria-label="Edit event" data-tooltip="Edit"
 						class="inline-flex items-center gap-1 rounded-full border border-cf-orange/40 bg-cf-orange/10 px-2.5 sm:px-3 py-1 text-xs text-cf-orange hover:bg-cf-orange/20 transition">
 						\u270E<span class="hidden sm:inline"> Edit</span>
 					</a>
-					<button type="button" data-action="clone-event" data-event-id="${escapeAttr(ev.id)}" aria-label="Clone event" data-tooltip="Clone"
+					<button type="button" data-action="clone-event" data-event-slug="${escapeAttr(ev.slug)}" aria-label="Clone event" data-tooltip="Clone"
 						class="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/[0.04] px-2.5 sm:px-3 py-1 text-xs text-white/80 hover:border-white/30 transition">
 						\u2398<span class="hidden sm:inline"> Clone</span>
 					</button>
 					${
 						canDelete
-							? `<button type="button" data-action="delete-event" data-event-id="${escapeAttr(ev.id)}" aria-label="Delete event" data-tooltip="Delete"
+							? `<button type="button" data-action="delete-event" data-event-slug="${escapeAttr(ev.slug)}" aria-label="Delete event" data-tooltip="Delete"
 						class="inline-flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/10 px-2.5 sm:px-3 py-1 text-xs text-red-400 hover:bg-red-500/20 transition">
 						\u2716<span class="hidden sm:inline"> Delete</span>
 					</button>`
@@ -94,16 +94,16 @@ app.get('/admin/events', async (c) => {
 					var btn = e.target.closest("[data-action]");
 					if (!btn) return;
 					var action = btn.getAttribute("data-action");
-					var eventId = btn.getAttribute("data-event-id");
+					var eventSlug = btn.getAttribute("data-event-slug");
 
 					if (action === "clone-event") {
 						btn.disabled = true;
-						fetch("/api/admin/events/" + encodeURIComponent(eventId) + "/clone", { method: "POST", credentials: "same-origin" })
+						fetch("/api/admin/events/" + encodeURIComponent(eventSlug) + "/clone", { method: "POST", credentials: "same-origin" })
 							.then(function (r) { return r.json(); })
 							.then(function (j) {
 								if (j.error) { toast(j.error, true); btn.disabled = false; return; }
-								toast("Cloned as " + j.newEventId);
-								setTimeout(function () { window.location.href = "/admin/events/" + encodeURIComponent(j.newEventId); }, 800);
+								toast("Cloned as " + j.newEventSlug);
+								setTimeout(function () { window.location.href = "/admin/events/" + encodeURIComponent(j.newEventSlug); }, 800);
 							})
 							.catch(function (err) { toast("Clone failed: " + err.message, true); btn.disabled = false; });
 					}
@@ -111,17 +111,17 @@ app.get('/admin/events', async (c) => {
 					if (action === "delete-event") {
 						window.confirmDialog({
 							title: "Delete event?",
-							message: "Delete event '" + eventId + "'.\\n\\nThis cannot be undone.",
+							message: "Delete event '" + eventSlug + "'.\\n\\nThis cannot be undone.",
 							confirmLabel: "Delete event",
 						}).then(function (ok) {
 							if (!ok) return;
 							btn.disabled = true;
-							fetch("/api/admin/events/" + encodeURIComponent(eventId), { method: "DELETE", credentials: "same-origin" })
+							fetch("/api/admin/events/" + encodeURIComponent(eventSlug), { method: "DELETE", credentials: "same-origin" })
 								.then(function (r) { return r.json(); })
 								.then(function (j) {
 									if (j.error) { toast(j.error, true); btn.disabled = false; return; }
 									toast("Deleted");
-									var card = document.querySelector('[data-event-card="' + eventId + '"]');
+									var card = document.querySelector('[data-event-card="' + eventSlug + '"]');
 									if (card) card.remove();
 								})
 								.catch(function (err) { toast("Delete failed: " + err.message, true); btn.disabled = false; });
@@ -150,7 +150,7 @@ app.get('/admin/events/new', (c) => {
 					</div>
 					<div>
 						<label class="block text-xs uppercase tracking-widest text-white/50 mb-1">Slug (URL-safe ID)</label>
-						<input name="id" type="text" required placeholder="nyc-tech-week-2026" pattern="[a-z0-9][a-z0-9\\-]{1,62}[a-z0-9]"
+						<input name="slug" type="text" required placeholder="nyc-tech-week-2026" pattern="[a-z0-9][a-z0-9\\-]{1,62}[a-z0-9]"
 							class="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-sm text-white font-mono placeholder:text-white/30 focus:border-cf-orange/50 focus:outline-none" />
 						<p class="mt-1 text-xs text-white/40">Lowercase letters, numbers, hyphens. 3–64 chars.</p>
 					</div>
@@ -173,7 +173,7 @@ app.get('/admin/events/new', (c) => {
 			(function () {
 				var form = document.getElementById("create-form");
 				var nameInput = form.querySelector('[name="name"]');
-				var slugInput = form.querySelector('[name="id"]');
+				var slugInput = form.querySelector('[name="slug"]');
 				var slugEdited = false;
 
 				slugInput.addEventListener("input", function () { slugEdited = true; });
@@ -191,7 +191,7 @@ app.get('/admin/events/new', (c) => {
 					var btn = form.querySelector('button[type="submit"]');
 					btn.disabled = true;
 					var body = {
-						id: slugInput.value,
+						slug: slugInput.value,
 						name: nameInput.value,
 						status: form.querySelector('[name="status"]').value,
 					};
@@ -204,7 +204,7 @@ app.get('/admin/events/new', (c) => {
 						.then(function (r) { return r.json(); })
 						.then(function (j) {
 							if (j.error) { alert(j.error); btn.disabled = false; return; }
-							window.location.href = "/admin/events/" + encodeURIComponent(j.id);
+							window.location.href = "/admin/events/" + encodeURIComponent(j.slug);
 						})
 						.catch(function (err) { alert("Failed: " + err.message); btn.disabled = false; });
 				});

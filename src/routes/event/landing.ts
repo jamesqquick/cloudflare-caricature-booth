@@ -6,7 +6,7 @@ const app = new Hono<EventEnv>();
 
 /**
  * Event landing / marketing page.
- * GET / (mounted on eventApp, so resolves to /e/:eventId/)
+ * GET / (mounted on eventApp, so resolves to /e/:eventSlug/)
  */
 app.get('/', async (c) => {
 	const { event } = c.get('eventCtx');
