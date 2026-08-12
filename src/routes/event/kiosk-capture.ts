@@ -18,11 +18,27 @@ app.get('/kiosk/capture', (c) => {
 			'Capture your selfie',
 			`			<main id="capture-root" class="studio-shell">
 				<aside class="studio-rail">
-					<div class="studio-brand">
-						<span class="studio-cloud" aria-hidden="true"></span>
-						<span>Caricature Booth</span>
+					<div class="studio-topbar">
+						<div class="studio-brand">
+							<span class="studio-cloud" aria-hidden="true"></span>
+							<span>Caricature Booth</span>
+						</div>
+						<div class="studio-top-actions">
+							<a href="${basePath}/kiosk" class="studio-mobile-cancel">Cancel</a>
+							<button id="cap-mute" type="button" aria-label="Mute sounds" aria-pressed="false" class="studio-mute">
+								<svg id="cap-sound-on-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+									<path d="M11 5 6 9H2v6h4l5 4V5Z"></path>
+									<path d="M15.5 8.5a5 5 0 0 1 0 7"></path>
+									<path d="M18.5 5.5a9 9 0 0 1 0 13"></path>
+								</svg>
+								<svg id="cap-muted-icon" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+									<path d="M11 5 6 9H2v6h4l5 4V5Z"></path>
+									<path d="m22 9-6 6"></path>
+									<path d="m16 9 6 6"></path>
+								</svg>
+							</button>
+						</div>
 					</div>
-					<a href="${basePath}/kiosk" class="studio-mobile-cancel">Cancel</a>
 
 					<section class="studio-intro" aria-labelledby="capture-heading">
 						<p class="studio-eyebrow">Step 01 / 03</p>
@@ -104,6 +120,8 @@ app.get('/kiosk/capture', (c) => {
 				flex-direction: column;
 				padding: clamp(1.75rem, 3.5vw, 3.5rem);
 			}
+			.studio-topbar { align-items: center; display: flex; gap: 0.5rem; justify-content: space-between; }
+			.studio-top-actions { align-items: center; display: flex; gap: 0.7rem; }
 			.studio-brand {
 				align-items: center;
 				display: flex;
@@ -111,6 +129,7 @@ app.get('/kiosk/capture', (c) => {
 				font-weight: 800;
 				gap: 0.7rem;
 				letter-spacing: -0.02em;
+				white-space: nowrap;
 			}
 			.studio-cloud {
 				background: var(--studio-orange);
@@ -130,6 +149,22 @@ app.get('/kiosk/capture', (c) => {
 				width: 1.05rem;
 			}
 			.studio-mobile-cancel { display: none; }
+			.studio-mute {
+				align-items: center;
+				background: oklch(96% 0.012 70 / 0.05);
+				border: 1px solid oklch(96% 0.012 70 / 0.15);
+				border-radius: 50%;
+				color: var(--studio-muted);
+				cursor: pointer;
+				display: flex;
+				height: 2.75rem;
+				justify-content: center;
+				transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, transform 180ms ease;
+				width: 2.75rem;
+			}
+			.studio-mute svg { height: 1.25rem; width: 1.25rem; }
+			.studio-mute:active { transform: scale(0.95); }
+			.studio-mute.is-muted { background: oklch(72% 0.19 52 / 0.15); border-color: oklch(72% 0.19 52 / 0.5); color: var(--studio-orange); }
 			.studio-intro { margin: auto 0; }
 			.studio-eyebrow {
 				color: var(--studio-orange);
@@ -244,6 +279,8 @@ app.get('/kiosk/capture', (c) => {
 			@media (hover: hover) {
 				.studio-shutter:not(:disabled):hover, .studio-use:not(:disabled):hover { filter: brightness(1.08); }
 				.studio-retake:not(:disabled):hover { background: oklch(96% 0.012 70 / 0.08); border-color: oklch(96% 0.012 70 / 0.55); }
+				.studio-mute:hover { background: oklch(96% 0.012 70 / 0.1); border-color: oklch(96% 0.012 70 / 0.3); color: var(--studio-paper); }
+				.studio-mute.is-muted:hover { background: oklch(72% 0.19 52 / 0.22); border-color: var(--studio-orange); color: var(--studio-orange); }
 				.studio-cancel:hover, .studio-privacy a:hover, .studio-mobile-privacy a:hover { color: var(--studio-paper); }
 			}
 
@@ -256,6 +293,7 @@ app.get('/kiosk/capture', (c) => {
 					justify-content: space-between;
 					padding: max(0.85rem, env(safe-area-inset-top)) 1.1rem 0.55rem;
 				}
+				.studio-topbar { width: 100%; }
 				.studio-intro {
 					clip: rect(0 0 0 0);
 					clip-path: inset(50%);
@@ -320,6 +358,9 @@ app.get('/kiosk/capture', (c) => {
 				const useBtn = document.getElementById("cap-use");
 				const retakeBtn = document.getElementById("cap-retake");
 				const statusEl = document.getElementById("cap-status");
+				const muteBtn = document.getElementById("cap-mute");
+				const soundOnIcon = document.getElementById("cap-sound-on-icon");
+				const mutedIcon = document.getElementById("cap-muted-icon");
 
 				let stream = null;
 				let capturedBlob = null;
@@ -330,6 +371,25 @@ app.get('/kiosk/capture', (c) => {
 				const flashEl = document.getElementById("cap-flash");
 
 				// ── Audio ──
+				var muteStorageKey = "kiosk:capture-muted";
+				var isMuted = false;
+				try { isMuted = localStorage.getItem(muteStorageKey) === "true"; } catch (e) {}
+
+				function renderMuteState() {
+					muteBtn.setAttribute("aria-label", isMuted ? "Unmute sounds" : "Mute sounds");
+					muteBtn.setAttribute("aria-pressed", String(isMuted));
+					soundOnIcon.classList.toggle("hidden", isMuted);
+					mutedIcon.classList.toggle("hidden", !isMuted);
+					muteBtn.classList.toggle("is-muted", isMuted);
+				}
+
+				muteBtn.addEventListener("click", function () {
+					isMuted = !isMuted;
+					try { localStorage.setItem(muteStorageKey, String(isMuted)); } catch (e) {}
+					renderMuteState();
+				});
+				renderMuteState();
+
 				var audioCtx = null;
 				try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
 
@@ -340,7 +400,7 @@ app.get('/kiosk/capture', (c) => {
 				}
 
 				function playBeep(frequency, duration) {
-					if (!audioCtx) return;
+					if (isMuted || !audioCtx) return;
 					var osc = audioCtx.createOscillator();
 					var gain = audioCtx.createGain();
 					osc.connect(gain);
@@ -353,7 +413,7 @@ app.get('/kiosk/capture', (c) => {
 				}
 
 				function playShutterSound() {
-					if (!audioCtx) return;
+					if (isMuted || !audioCtx) return;
 					// Two-part shutter: sharp click + softer curtain close (SLR style)
 					var now = audioCtx.currentTime;
 					// Part 1: short sharp click
