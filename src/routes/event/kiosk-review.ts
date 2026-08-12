@@ -14,7 +14,7 @@ app.get('/kiosk/review', async (c) => {
 	return c.html(
 		kioskPage(
 			'Review your postcard',
-			`<main class="min-h-[100dvh] w-full flex flex-col">
+			`<main class="h-[100dvh] w-full flex flex-col">
 				<header class="shrink-0 px-6 pt-4 sm:pt-8 pb-2 flex items-center justify-between">
 					<a href="${basePath}/kiosk?reuseSelfie=1" class="text-sm text-white/50 hover:text-white">← Pick different scene</a>
 					<span class="text-xs uppercase tracking-[0.25em] text-white/40 hidden sm:inline">Step 3 of 3 · Review</span>
@@ -24,18 +24,17 @@ app.get('/kiosk/review', async (c) => {
 				<section class="flex-1 min-h-0 flex flex-col items-center px-6 sm:px-8 pt-2 pb-4 gap-4 sm:gap-6">
 					<div class="text-center max-w-md">
 						<h1 class="text-[clamp(1.75rem,5vw,2.5rem)] font-bold leading-tight">Ready to go?</h1>
-						<p class="mt-2 text-sm sm:text-base text-white/60">
-							We'll generate your caricature in about 30 seconds.
-						</p>
 					</div>
 
-					<div class="relative aspect-[3/4] w-full max-w-[320px] rounded-2xl overflow-hidden border border-white/10 bg-black/40">
-						<img id="rev-selfie" alt="Your captured selfie" class="absolute inset-0 h-full w-full object-cover -scale-x-100" />
+					<div class="flex-1 min-h-0 w-full flex items-center justify-center">
+						<div class="relative h-full max-h-[calc((100vw-3rem)*4/3)] sm:max-h-[calc((100vw-4rem)*4/3)] aspect-[3/4] rounded-2xl overflow-hidden border border-white/10 bg-black/40">
+							<img id="rev-selfie" alt="Your captured selfie" class="absolute inset-0 h-full w-full object-cover -scale-x-100" />
+						</div>
 					</div>
 
 					<button id="rev-go" disabled
 						class="mt-2 inline-flex items-center justify-center rounded-full bg-cf-orange px-12 py-4 sm:py-5 text-lg sm:text-xl font-bold text-black shadow-[0_0_40px_rgba(246,130,31,0.45)] hover:bg-cf-orange-dark active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none transition">
-						Make my postcard
+						Generate
 					</button>
 					<p id="rev-status" class="text-center text-[11px] sm:text-xs text-white/40 min-h-[1rem]"></p>
 				</section>
