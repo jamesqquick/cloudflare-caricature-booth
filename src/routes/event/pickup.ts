@@ -48,9 +48,11 @@ app.get('/p/:id', async (c) => {
 	}
 
 	const row = await c.env.DB.prepare(
-		`SELECT id, status, scene_name, postcard_key, completed_at, email, error_msg FROM sessions WHERE id = ?`,
+		`SELECT id, status, scene_name, postcard_key, completed_at, email, error_msg
+		 FROM sessions
+		 WHERE id = ? AND event_id = ?`,
 	)
-		.bind(id)
+		.bind(id, event.id)
 		.first<{
 			id: string;
 			status: string | null;

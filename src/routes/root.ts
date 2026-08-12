@@ -13,7 +13,7 @@ app.get('/', async (c) => {
 			? `<p class="text-white/60 text-center py-8">No events are running right now. Check back soon!</p>`
 			: activeEvents
 					.map(
-						(e) => `<a href="/e/${escapeAttr(e.id)}" class="block rounded-2xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/30 transition p-6">
+						(e) => `<a href="/e/${escapeAttr(e.slug)}" class="block rounded-2xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/30 transition p-6">
 			<div class="text-xl font-bold">${escapeAttr(e.name)}</div>
 			<p class="mt-2 text-sm text-white/60">${escapeAttr(e.tagline)}</p>
 		</a>`,

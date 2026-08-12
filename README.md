@@ -1,11 +1,11 @@
 # Caricature Booth
 
-An AI-powered photo booth built entirely on Cloudflare. Attendees take a selfie, pick a scene, and get a hand-drawn ink caricature printed on a physical 4×6 postcard — in about 30–90 seconds.
+An AI-powered photo booth built entirely on Cloudflare. Attendees pick a scene, take a selfie, and get a hand-drawn ink caricature printed on a physical 4×6 postcard — in about 30–90 seconds.
 
 ## What it does
 
-1. An iPad kiosk opens the camera — the attendee takes a selfie
-2. They pick from a set of configurable scenes
+1. The attendee picks from a set of configurable scenes on the kiosk landing page
+2. The kiosk opens the camera and the attendee takes a selfie
 3. A durable AI pipeline runs on Cloudflare: moderates the photo, generates a caricature via Replicate, and composites a final postcard
 4. A physical DNP dye-sub printer at the booth prints the postcard
 5. The attendee also gets a digital pickup link (QR code) to keep their postcard
@@ -100,7 +100,7 @@ src/
     analytics.ts              — Analytics Engine writes and queries
   routes/
     event/
-      kiosk-*.ts              — kiosk page handlers (idle, capture, scene, review, status, done)
+      kiosk-*.ts              — kiosk page handlers (idle, capture, review, status, done)
       kiosk-api.ts            — POST endpoints for selfie upload, session start, print request
       session-ws.ts           — WebSocket upgrade proxy → SessionDO
       gallery.ts              — public event gallery
@@ -171,6 +171,7 @@ Create `print-agent/.env`:
 
 ```
 WORKER_URL=https://your-worker.workers.dev
+EVENT_SLUG=your-event-slug
 PRINT_AGENT_TOKEN=your_admin_password
 PRINTER_DRIVER=dnp
 PRINTER_NAME=DNP_DS620

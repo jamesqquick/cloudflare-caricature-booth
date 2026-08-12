@@ -5,10 +5,11 @@ import { kioskPage } from '../../lib/html';
 const app = new Hono<EventEnv>();
 
 /**
- * Live camera capture screen (step 1 of 3).
+ * Live camera capture screen (step 2 of 2).
  * GET /kiosk/capture
  */
 app.get('/kiosk/capture', (c) => {
+	const eventId = c.get('eventCtx').event.id;
 	const basePath = c.get('basePath');
 	const origin = new URL(c.req.url).origin;
 	const qrTarget = `${origin}${basePath}/kiosk`;
@@ -23,8 +24,20 @@ app.get('/kiosk/capture', (c) => {
 			<main id="capture-root" class="min-h-[100dvh] h-[100dvh] w-full flex flex-col">
 				<header class="shrink-0 px-6 pt-4 sm:pt-8 pb-2 flex items-center justify-between">
 					<a href="${basePath}/kiosk" class="text-sm text-white/50 hover:text-white sm:pl-32">← Cancel</a>
-					<span class="text-xs uppercase tracking-[0.25em] text-white/40 hidden sm:inline">Step 1 of 3 · Selfie</span>
-					<span class="w-12"></span>
+					<span class="text-xs uppercase tracking-[0.25em] text-white/40 hidden sm:inline">Step 2 of 2 · Selfie</span>
+					<button id="cap-mute" type="button" aria-label="Mute sounds" aria-pressed="false"
+						class="flex size-11 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/70 transition hover:border-white/30 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cf-orange active:scale-95">
+						<svg id="cap-sound-on-icon" class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+							<path d="M11 5 6 9H2v6h4l5 4V5Z"></path>
+							<path d="M15.5 8.5a5 5 0 0 1 0 7"></path>
+							<path d="M18.5 5.5a9 9 0 0 1 0 13"></path>
+						</svg>
+						<svg id="cap-muted-icon" class="hidden size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+							<path d="M11 5 6 9H2v6h4l5 4V5Z"></path>
+							<path d="m22 9-6 6"></path>
+							<path d="m16 9 6 6"></path>
+						</svg>
+					</button>
 				</header>
 
 				<section class="flex-1 min-h-0 flex flex-col items-center justify-center px-4 sm:px-6 py-2 gap-3">
@@ -61,7 +74,7 @@ app.get('/kiosk/capture', (c) => {
 					<div id="cap-confirm-row" class="hidden flex-col gap-2 sm:gap-3 items-stretch max-w-md mx-auto">
 						<button id="cap-use"
 							class="rounded-full bg-cf-orange px-8 py-3 sm:py-5 text-base sm:text-xl font-bold text-black shadow-[0_0_40px_rgba(246,130,31,0.45)] hover:bg-cf-orange-dark active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed transition">
-							Use this photo
+							Generate
 						</button>
 						<button id="cap-retake"
 							class="rounded-full border border-white/30 px-8 py-2.5 sm:py-4 text-sm sm:text-base text-white/80 hover:border-white/60 hover:text-white active:scale-[0.98] transition">
@@ -69,9 +82,6 @@ app.get('/kiosk/capture', (c) => {
 						</button>
 					</div>
 					<p id="cap-status" class="mt-2 sm:mt-4 text-center text-[11px] sm:text-xs text-white/40 min-h-[1rem]"></p>
-					<p class="mt-2 text-center text-[10px] uppercase tracking-[0.2em] text-white/25">
-						We don't store your photo after the event · <a href="${basePath}/privacy" class="underline underline-offset-2 hover:text-white/40">Privacy</a>
-					</p>
 				</footer>
 			</main>
 
@@ -94,6 +104,17 @@ app.get('/kiosk/capture', (c) => {
 			<script>
 			(function () {
 				const basePath = ${JSON.stringify(basePath)};
+				const eventId = ${JSON.stringify(eventId)};
+				let selectedScene;
+				try {
+					selectedScene = JSON.parse(sessionStorage.getItem("kiosk:scene") || "null");
+					if (!selectedScene || selectedScene.eventId !== eventId || !selectedScene.sceneId) throw new Error("incomplete payload");
+				} catch (err) {
+					console.error("bad kiosk:scene payload:", err);
+					sessionStorage.removeItem("kiosk:scene");
+					window.location.replace(basePath + "/kiosk");
+					return;
+				}
 				const video = document.getElementById("cap-video");
 				const preview = document.getElementById("cap-preview");
 				const overlay = document.getElementById("cap-overlay");
@@ -104,16 +125,41 @@ app.get('/kiosk/capture', (c) => {
 				const useBtn = document.getElementById("cap-use");
 				const retakeBtn = document.getElementById("cap-retake");
 				const statusEl = document.getElementById("cap-status");
+				const muteBtn = document.getElementById("cap-mute");
+				const soundOnIcon = document.getElementById("cap-sound-on-icon");
+				const mutedIcon = document.getElementById("cap-muted-icon");
 
 				let stream = null;
 				let capturedBlob = null;
 				let capturedUrl = null;
+				let uploadedSelfie = null;
 				let countdownTimer = null;
 				const countdownEl = document.getElementById("cap-countdown");
 				const countdownNum = document.getElementById("cap-countdown-num");
 				const flashEl = document.getElementById("cap-flash");
 
 				// ── Audio ──
+				var muteStorageKey = "kiosk:capture-muted";
+				var isMuted = false;
+				try { isMuted = localStorage.getItem(muteStorageKey) === "true"; } catch (e) {}
+
+				function renderMuteState() {
+					muteBtn.setAttribute("aria-label", isMuted ? "Unmute sounds" : "Mute sounds");
+					muteBtn.setAttribute("aria-pressed", String(isMuted));
+					soundOnIcon.classList.toggle("hidden", isMuted);
+					mutedIcon.classList.toggle("hidden", !isMuted);
+					muteBtn.classList.toggle("border-cf-orange/50", isMuted);
+					muteBtn.classList.toggle("bg-cf-orange/15", isMuted);
+					muteBtn.classList.toggle("text-cf-orange", isMuted);
+				}
+
+				muteBtn.addEventListener("click", function () {
+					isMuted = !isMuted;
+					try { localStorage.setItem(muteStorageKey, String(isMuted)); } catch (e) {}
+					renderMuteState();
+				});
+				renderMuteState();
+
 				var audioCtx = null;
 				try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
 
@@ -124,7 +170,7 @@ app.get('/kiosk/capture', (c) => {
 				}
 
 				function playBeep(frequency, duration) {
-					if (!audioCtx) return;
+					if (isMuted || !audioCtx) return;
 					var osc = audioCtx.createOscillator();
 					var gain = audioCtx.createGain();
 					osc.connect(gain);
@@ -137,7 +183,7 @@ app.get('/kiosk/capture', (c) => {
 				}
 
 				function playShutterSound() {
-					if (!audioCtx) return;
+					if (isMuted || !audioCtx) return;
 					// Two-part shutter: sharp click + softer curtain close (SLR style)
 					var now = audioCtx.currentTime;
 					// Part 1: short sharp click
@@ -315,6 +361,7 @@ app.get('/kiosk/capture', (c) => {
 
 				async function retake() {
 					capturedBlob = null;
+					uploadedSelfie = null;
 					if (capturedUrl) { URL.revokeObjectURL(capturedUrl); capturedUrl = null; }
 					preview.classList.add("hidden");
 					video.classList.remove("hidden");
@@ -332,19 +379,30 @@ app.get('/kiosk/capture', (c) => {
 					retakeBtn.disabled = true;
 					statusEl.textContent = "Uploading…";
 					try {
-						const fd = new FormData();
-						fd.append("selfie", capturedBlob, "selfie.jpg");
-						const r = await fetch(basePath + "/api/kiosk/selfie", { method: "POST", body: fd });
-						const j = await r.json();
-						if (!r.ok || !j.ok) throw new Error(j.error || "upload failed");
-						sessionStorage.setItem("kiosk:selfie", JSON.stringify({
-							sessionId: j.sessionId,
-							selfieKey: j.selfieKey,
-							size: j.size,
-							capturedAt: Date.now(),
-						}));
-						statusEl.textContent = "✓ Uploaded. Pick a scene next…";
-						window.location.href = basePath + "/kiosk/scene";
+						if (!uploadedSelfie) {
+							const fd = new FormData();
+							fd.append("selfie", capturedBlob, "selfie.jpg");
+							const uploadResponse = await fetch(basePath + "/api/kiosk/selfie", { method: "POST", body: fd });
+							const uploadData = await uploadResponse.json();
+							if (!uploadResponse.ok || !uploadData.ok) throw new Error(uploadData.error || "upload failed");
+							uploadedSelfie = { sessionId: uploadData.sessionId, selfieKey: uploadData.selfieKey };
+						}
+
+						statusEl.textContent = "Starting generation…";
+						const startResponse = await fetch(basePath + "/api/kiosk/start", {
+							method: "POST",
+							headers: { "content-type": "application/json" },
+							body: JSON.stringify({
+								sessionId: uploadedSelfie.sessionId,
+								selfieKey: uploadedSelfie.selfieKey,
+								sceneId: selectedScene.sceneId,
+							}),
+						});
+						const startData = await startResponse.json();
+						if (!startResponse.ok || !startData.ok) throw new Error(startData.error || "start failed");
+						sessionStorage.removeItem("kiosk:scene");
+						sessionStorage.removeItem("kiosk:selfie");
+						window.location.href = startData.statusUrl;
 					} catch (err) {
 						console.error(err);
 						statusEl.textContent = "✗ " + (err && err.message ? err.message : String(err));

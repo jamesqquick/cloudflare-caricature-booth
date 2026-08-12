@@ -6,7 +6,7 @@ const app = new Hono<EventEnv>();
 
 /**
  * Event landing / marketing page.
- * GET / (mounted on eventApp, so resolves to /e/:eventId/)
+ * GET / (mounted on eventApp, so resolves to /e/:eventSlug/)
  */
 app.get('/', async (c) => {
 	const { event } = c.get('eventCtx');
@@ -46,16 +46,16 @@ app.get('/', async (c) => {
 					<ol class="grid sm:grid-cols-3 gap-4 sm:gap-6">
 						<li class="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
 							<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 01</div>
-							<div class="mt-3 text-lg font-semibold">Snap a selfie</div>
+							<div class="mt-3 text-lg font-semibold">Pick a scene</div>
 							<p class="mt-2 text-sm text-white/60">
-								Step up to the booth and take a photo. No app, no signup.
+								Choose your backdrop from the scene picker.
 							</p>
 						</li>
 						<li class="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
 							<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 02</div>
-							<div class="mt-3 text-lg font-semibold">Pick a scene</div>
+							<div class="mt-3 text-lg font-semibold">Snap a selfie</div>
 							<p class="mt-2 text-sm text-white/60">
-								Choose your backdrop from the scene picker.
+								Take a photo, retake it if needed, then generate your postcard.
 							</p>
 						</li>
 						<li class="rounded-2xl border border-white/10 bg-white/[0.03] p-6">

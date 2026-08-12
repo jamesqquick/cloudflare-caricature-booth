@@ -2,7 +2,8 @@
 export type PrintJob = {
 	id: string;
 	session_id: string;
-	event_id: string;
+	event_id: number;
+	event_slug: string;
 	postcard_key: string;
 	postcard_url: string;
 	scene_name: string;
@@ -11,7 +12,7 @@ export type PrintJob = {
 
 export type AgentConfig = {
 	workerUrl: string;
-	eventId: string;
+	eventSlug: string;
 	pollIntervalMs: number;
 	batchSize: number;
 	/** Bearer token for the print-agent API — must equal the Worker's ADMIN_PASSWORD. */
