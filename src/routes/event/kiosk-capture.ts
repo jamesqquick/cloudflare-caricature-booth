@@ -24,7 +24,19 @@ app.get('/kiosk/capture', (c) => {
 				<header class="shrink-0 px-6 pt-4 sm:pt-8 pb-2 flex items-center justify-between">
 					<a href="${basePath}/kiosk" class="text-sm text-white/50 hover:text-white sm:pl-32">← Cancel</a>
 					<span class="text-xs uppercase tracking-[0.25em] text-white/40 hidden sm:inline">Step 1 of 3 · Selfie</span>
-					<span class="w-12"></span>
+					<button id="cap-mute" type="button" aria-label="Mute sounds" aria-pressed="false"
+						class="flex size-11 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/70 transition hover:border-white/30 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cf-orange active:scale-95">
+						<svg id="cap-sound-on-icon" class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+							<path d="M11 5 6 9H2v6h4l5 4V5Z"></path>
+							<path d="M15.5 8.5a5 5 0 0 1 0 7"></path>
+							<path d="M18.5 5.5a9 9 0 0 1 0 13"></path>
+						</svg>
+						<svg id="cap-muted-icon" class="hidden size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+							<path d="M11 5 6 9H2v6h4l5 4V5Z"></path>
+							<path d="m22 9-6 6"></path>
+							<path d="m16 9 6 6"></path>
+						</svg>
+					</button>
 				</header>
 
 				<section class="flex-1 min-h-0 flex flex-col items-center justify-center px-4 sm:px-6 py-2 gap-3">
@@ -104,6 +116,9 @@ app.get('/kiosk/capture', (c) => {
 				const useBtn = document.getElementById("cap-use");
 				const retakeBtn = document.getElementById("cap-retake");
 				const statusEl = document.getElementById("cap-status");
+				const muteBtn = document.getElementById("cap-mute");
+				const soundOnIcon = document.getElementById("cap-sound-on-icon");
+				const mutedIcon = document.getElementById("cap-muted-icon");
 
 				let stream = null;
 				let capturedBlob = null;
@@ -114,6 +129,27 @@ app.get('/kiosk/capture', (c) => {
 				const flashEl = document.getElementById("cap-flash");
 
 				// ── Audio ──
+				var muteStorageKey = "kiosk:capture-muted";
+				var isMuted = false;
+				try { isMuted = localStorage.getItem(muteStorageKey) === "true"; } catch (e) {}
+
+				function renderMuteState() {
+					muteBtn.setAttribute("aria-label", isMuted ? "Unmute sounds" : "Mute sounds");
+					muteBtn.setAttribute("aria-pressed", String(isMuted));
+					soundOnIcon.classList.toggle("hidden", isMuted);
+					mutedIcon.classList.toggle("hidden", !isMuted);
+					muteBtn.classList.toggle("border-cf-orange/50", isMuted);
+					muteBtn.classList.toggle("bg-cf-orange/15", isMuted);
+					muteBtn.classList.toggle("text-cf-orange", isMuted);
+				}
+
+				muteBtn.addEventListener("click", function () {
+					isMuted = !isMuted;
+					try { localStorage.setItem(muteStorageKey, String(isMuted)); } catch (e) {}
+					renderMuteState();
+				});
+				renderMuteState();
+
 				var audioCtx = null;
 				try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
 
@@ -124,7 +160,7 @@ app.get('/kiosk/capture', (c) => {
 				}
 
 				function playBeep(frequency, duration) {
-					if (!audioCtx) return;
+					if (isMuted || !audioCtx) return;
 					var osc = audioCtx.createOscillator();
 					var gain = audioCtx.createGain();
 					osc.connect(gain);
@@ -137,7 +173,7 @@ app.get('/kiosk/capture', (c) => {
 				}
 
 				function playShutterSound() {
-					if (!audioCtx) return;
+					if (isMuted || !audioCtx) return;
 					// Two-part shutter: sharp click + softer curtain close (SLR style)
 					var now = audioCtx.currentTime;
 					// Part 1: short sharp click
