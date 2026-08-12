@@ -46,7 +46,7 @@ app.get('/kiosk', async (c) => {
 
 	return c.html(
 		kioskPage(
-			`${event.name} — Tap to start`,
+			`${event.name} — Start`,
 			`			<div class="flex justify-center pt-4 sm:fixed sm:top-4 sm:left-4 sm:z-50 sm:pt-0 sm:block">
 				<img src="${qrSrc}" alt="QR code — scan to start"
 					class="w-20 sm:w-24 rounded-xl border border-white/10 bg-white p-1.5" />
@@ -70,7 +70,7 @@ app.get('/kiosk', async (c) => {
 
 					<button id="kiosk-start" type="button" disabled
 						class="mt-7 inline-flex items-center justify-center rounded-full bg-cf-orange px-14 py-5 text-xl sm:px-16 sm:py-6 sm:text-2xl font-bold text-black shadow-[0_0_60px_rgba(246,130,31,0.45)] transition hover:bg-cf-orange-dark active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none">
-						Tap to start
+						Start
 					</button>
 					<p id="scene-status" role="status" aria-live="polite" class="mt-3 min-h-5 text-sm text-white/50">Choose a scene to continue.</p>
 				</section>

@@ -29,20 +29,8 @@ app.get('/kiosk/review', async (c) => {
 						</p>
 					</div>
 
-					<div class="w-full max-w-2xl grid grid-cols-2 gap-3 sm:gap-4">
-						<div class="flex flex-col items-center gap-2">
-							<div class="text-xs uppercase tracking-[0.2em] text-white/40">Your selfie</div>
-							<div class="relative aspect-[3/4] w-full max-w-[260px] rounded-2xl overflow-hidden border border-white/10 bg-black/40">
-								<img id="rev-selfie" alt="" class="absolute inset-0 h-full w-full object-cover -scale-x-100" />
-							</div>
-						</div>
-						<div class="flex flex-col items-center gap-2">
-							<div class="text-xs uppercase tracking-[0.2em] text-white/40">Your scene</div>
-							<div class="aspect-[3/4] w-full max-w-[260px] rounded-2xl border border-white/10 bg-white/[0.04] p-4 sm:p-5 flex flex-col items-center justify-center text-center">
-								<div id="rev-scene-emoji" class="text-6xl sm:text-7xl leading-none" aria-hidden="true">🎨</div>
-								<div id="rev-scene-name" class="mt-3 text-base sm:text-lg font-semibold leading-tight">Loading…</div>
-							</div>
-						</div>
+					<div class="relative aspect-[3/4] w-full max-w-[320px] rounded-2xl overflow-hidden border border-white/10 bg-black/40">
+						<img id="rev-selfie" alt="Your captured selfie" class="absolute inset-0 h-full w-full object-cover -scale-x-100" />
 					</div>
 
 					<button id="rev-go" disabled
@@ -57,8 +45,6 @@ app.get('/kiosk/review', async (c) => {
 				const basePath = ${JSON.stringify(basePath)};
 				const eventId = ${JSON.stringify(eventId)};
 				const selfieEl = document.getElementById("rev-selfie");
-				const emojiEl = document.getElementById("rev-scene-emoji");
-				const nameEl = document.getElementById("rev-scene-name");
 				const goBtn = document.getElementById("rev-go");
 				const statusEl = document.getElementById("rev-status");
 
@@ -76,8 +62,6 @@ app.get('/kiosk/review', async (c) => {
 				if (!data.sceneId) { window.location.replace(basePath + "/kiosk?reuseSelfie=1"); return; }
 
 				selfieEl.src = basePath + "/api/run-img?key=" + encodeURIComponent(data.selfieKey);
-				nameEl.textContent = data.sceneName || data.sceneId;
-				if (data.sceneEmoji) emojiEl.textContent = data.sceneEmoji;
 
 				goBtn.disabled = false;
 
