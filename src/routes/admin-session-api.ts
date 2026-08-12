@@ -16,11 +16,17 @@ app.post('/api/admin/reprint/:id', async (c) => {
 		return c.json({ error: 'invalid session id' }, 400);
 	}
 
-	const session = await c.env.DB.prepare('SELECT id, event_id, status, postcard_key, scene_name FROM sessions WHERE id = ?')
+	const session = await c.env.DB.prepare(
+		`SELECT s.id, s.event_id, e.slug AS event_slug, s.status, s.postcard_key, s.scene_name
+		 FROM sessions s
+		 LEFT JOIN events e ON e.id = s.event_id
+		 WHERE s.id = ?`,
+	)
 		.bind(id)
 		.first<{
 			id: string;
 			event_id: number | null;
+			event_slug: string | null;
 			status: string | null;
 			postcard_key: string | null;
 			scene_name: string | null;
@@ -32,9 +38,12 @@ app.post('/api/admin/reprint/:id', async (c) => {
 	if (session.status !== 'completed' || !session.postcard_key) {
 		return c.json({ error: 'session is not completed' }, 409);
 	}
+	if (!session.event_slug) {
+		return c.json({ error: 'event not found for this session' }, 409);
+	}
 
 	const origin = new URL(c.req.url).origin;
-	const postcardUrl = `${origin}/p/${id}`;
+	const postcardUrl = `${origin}/e/${session.event_slug}/p/${id}`;
 	const sceneName = session.scene_name ?? 'Scene';
 
 	const result = await c.env.DB.prepare(

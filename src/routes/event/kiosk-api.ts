@@ -113,8 +113,11 @@ app.post('/api/kiosk/print', async (c) => {
 		return c.json({ error: 'invalid sessionId' }, 400);
 	}
 
-	const session = await c.env.DB.prepare('SELECT id, event_id, status, postcard_key, scene_name FROM sessions WHERE id = ?')
-		.bind(sessionId)
+	const { event } = c.get('eventCtx');
+	const session = await c.env.DB.prepare(
+		'SELECT id, event_id, status, postcard_key, scene_name FROM sessions WHERE id = ? AND event_id = ?',
+	)
+		.bind(sessionId, event.id)
 		.first<{ id: string; event_id: number | null; status: string | null; postcard_key: string | null; scene_name: string | null }>();
 
 	if (!session) return c.json({ error: 'session not found' }, 404);
@@ -123,9 +126,11 @@ app.post('/api/kiosk/print', async (c) => {
 	}
 
 	const existing = await c.env.DB.prepare(
-		`SELECT id, status FROM print_jobs WHERE session_id = ? AND status IN ('pending', 'printing', 'printed') ORDER BY created_at DESC LIMIT 1`,
+		`SELECT id, status FROM print_jobs
+		 WHERE session_id = ? AND event_id = ? AND status IN ('pending', 'printing', 'printed')
+		 ORDER BY created_at DESC LIMIT 1`,
 	)
-		.bind(sessionId)
+		.bind(sessionId, event.id)
 		.first<{ id: string; status: string }>();
 
 	if (existing) {
@@ -134,7 +139,7 @@ app.post('/api/kiosk/print', async (c) => {
 	}
 
 	const origin = new URL(c.req.url).origin;
-	const postcardUrl = `${origin}/p/${sessionId}`;
+	const postcardUrl = `${origin}${c.get('basePath')}/p/${sessionId}`;
 	const sceneName = session.scene_name ?? 'Scene';
 
 	const insertResult = await c.env.DB.prepare(
@@ -159,8 +164,11 @@ app.get('/api/kiosk/print/:jobId/status', async (c) => {
 	const jobId = c.req.param('jobId');
 	if (!jobId) return c.json({ error: 'missing jobId' }, 400);
 
-	const row = await c.env.DB.prepare('SELECT status, printed_at, error_msg FROM print_jobs WHERE id = ?')
-		.bind(jobId)
+	const eventId = c.get('eventCtx').event.id;
+	const row = await c.env.DB.prepare(
+		'SELECT status, printed_at, error_msg FROM print_jobs WHERE id = ? AND event_id = ?',
+	)
+		.bind(jobId, eventId)
 		.first<{ status: string; printed_at: number | null; error_msg: string | null }>();
 
 	if (!row) return c.json({ error: 'job not found' }, 404);

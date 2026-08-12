@@ -300,9 +300,6 @@ export class CaricatureWorkflow extends WorkflowEntrypoint<Env, CaricaturePayloa
 							`caricature has no body: ${generate.caricatureKey}`,
 						);
 
-				const origin = publicOrigin?.replace(/\/$/, "") ?? "";
-				const postcardUrl = `${origin}/p/${sessionId}`;
-
 				// Load the event so buildPostcard can pick the right watermark
 				// (event.watermark_image_key from R2, falling back to bundled).
 				// We re-load inside the step rather than passing the EventRecord
@@ -314,8 +311,13 @@ export class CaricatureWorkflow extends WorkflowEntrypoint<Env, CaricaturePayloa
 				const currentEventCtx = canonicalEventId
 					? await loadEventContext(this.env, canonicalEventId)
 					: null;
+				if (!currentEventCtx) {
+					throw new Error(`event not found: ${canonicalEventId}`);
+				}
+				const origin = publicOrigin?.replace(/\/$/, "") ?? "";
+				const postcardUrl = `${origin}/e/${currentEventCtx.event.slug}/p/${sessionId}`;
 				const response = await buildPostcard(this.env, caricature.body, {
-					event: currentEventCtx?.event,
+					event: currentEventCtx.event,
 				});
 					if (!response.ok)
 						throw new Error(`postcard build failed: HTTP ${response.status}`);
