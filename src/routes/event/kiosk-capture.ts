@@ -5,14 +5,11 @@ import { kioskPage } from '../../lib/html';
 const app = new Hono<EventEnv>();
 
 /**
- * Live camera capture screen (step 1 of 3).
+ * Live camera capture screen
  * GET /kiosk/capture
  */
 app.get('/kiosk/capture', (c) => {
 	const basePath = c.get('basePath');
-	const origin = new URL(c.req.url).origin;
-	const eventUrl = `${origin}${basePath}/`;
-	const qrSrc = `${basePath}/api/kiosk/qr?url=${encodeURIComponent(eventUrl)}`;
 	return c.html(
 		kioskPage(
 			'Capture your selfie',
@@ -20,7 +17,6 @@ app.get('/kiosk/capture', (c) => {
 				<div class="studio-topbar">
 					<a href="${basePath}/kiosk" class="studio-mobile-cancel">Cancel</a>
 					<div class="studio-utilities">
-						<img src="${qrSrc}" alt="QR code to continue on your phone" class="studio-qr" />
 						<button id="cap-mute" type="button" aria-label="Mute sounds" aria-pressed="false" class="studio-mute">
 								<svg id="cap-sound-on-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 									<path d="M11 5 6 9H2v6h4l5 4V5Z"></path>
