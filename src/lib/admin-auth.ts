@@ -1,41 +1,38 @@
-/**
- * Admin auth helpers — signed cookie for the /admin/* dashboard (Phase 10.1).
- *
- * Token format:   `<timestampMs>.<hex-hmac-sha256>`
- * Signed payload: `admin:<timestampMs>`
- * Key:            the ADMIN_PASSWORD secret (raw bytes of the UTF-8 string)
- *
- * The token expires 24h after `<timestampMs>`. We re-validate the HMAC on every
- * request, so rotating the secret instantly invalidates every existing cookie.
- *
- * Cookie name:    `admin_session`
- * Cookie flags:   HttpOnly, Secure, SameSite=Strict, Path=/, Max-Age=86400
- *
- * Trade-off vs. JWT/Iron-session libraries: this is intentionally small. We
- * never need to encode anything other than "this caller knew the password at
- * time T", and we don't want a third-party dep just for that.
- */
+/** Admin auth helpers for Cloudflare Access-protected routes. */
 
-import type { Context, MiddlewareHandler } from "hono";
+import type { MiddlewareHandler } from "hono";
+import {
+	createRemoteJWKSet,
+	customFetch,
+	decodeProtectedHeader,
+	errors,
+	jwtVerify,
+} from "jose";
 
-export const ADMIN_COOKIE = "admin_session";
-const COOKIE_MAX_AGE_S = 60 * 60 * 24; // 24h
-const COOKIE_MAX_AGE_MS = COOKIE_MAX_AGE_S * 1000;
+const ACCESS_JWT_HEADER = "CF-Access-Jwt-Assertion";
+const REQUESTED_WITH_HEADER = "X-Requested-With";
+const REQUESTED_WITH_VALUE = "XMLHttpRequest";
+const JWKS_CACHE_MAX_SIZE = 4;
+const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+const jwksByTeamDomain = new Map<
+	string,
+	ReturnType<typeof createRemoteJWKSet>
+>();
 
-const encoder = new TextEncoder();
+interface AccessConfig {
+	teamDomain: string;
+	productionHostname: string;
+	productionAudience: string;
+	previewAudience: string;
+}
 
-async function hmacHex(key: string, payload: string): Promise<string> {
-	const cryptoKey = await crypto.subtle.importKey(
-		"raw",
-		encoder.encode(key),
-		{ name: "HMAC", hash: "SHA-256" },
-		false,
-		["sign", "verify"],
-	);
-	const sig = await crypto.subtle.sign("HMAC", cryptoKey, encoder.encode(payload));
-	return [...new Uint8Array(sig)]
-		.map((b) => b.toString(16).padStart(2, "0"))
-		.join("");
+class AccessConfigurationError extends Error {
+	readonly code = "ACCESS_CONFIGURATION_INVALID";
+
+	constructor() {
+		super("Cloudflare Access configuration is missing or invalid");
+		this.name = "AccessConfigurationError";
+	}
 }
 
 /** Constant-time string compare (lengths must match — short-circuit allowed). */
@@ -48,107 +45,236 @@ export function timingSafeEqual(a: string, b: string): boolean {
 	return diff === 0;
 }
 
-/** Mint a fresh admin token. */
-export async function signAdminToken(password: string): Promise<string> {
-	const ts = Date.now();
-	const payload = `admin:${ts}`;
-	const sig = await hmacHex(password, payload);
-	return `${ts}.${sig}`;
-}
+function readAccessConfig(env: Env): AccessConfig {
+	const productionHostname = normalizeHostname(env.CF_ACCESS_PRODUCTION_HOSTNAME);
+	const productionAudience = env.CF_ACCESS_PRODUCTION_AUDIENCE?.trim();
+	const previewAudience = env.CF_ACCESS_PREVIEW_AUDIENCE?.trim();
 
-/** Verify a cookie value. Returns true if signed and within 24h. */
-export async function verifyAdminToken(
-	token: string | undefined,
-	password: string,
-): Promise<boolean> {
-	if (!token) return false;
-	const dot = token.indexOf(".");
-	if (dot <= 0) return false;
-	const tsStr = token.slice(0, dot);
-	const sig = token.slice(dot + 1);
-
-	const ts = Number(tsStr);
-	if (!Number.isFinite(ts) || ts <= 0) return false;
-	if (Date.now() - ts > COOKIE_MAX_AGE_MS) return false;
-
-	const expected = await hmacHex(password, `admin:${tsStr}`);
-	return timingSafeEqual(sig, expected);
-}
-
-/**
- * Parse a single cookie name out of the `Cookie:` request header.
- * Hono has a cookie helper but we keep this dep-free since the rest of the
- * codebase doesn't import from `hono/cookie` yet.
- */
-export function readCookie(c: Context, name: string): string | undefined {
-	const header = c.req.header("cookie");
-	if (!header) return undefined;
-	for (const part of header.split(";")) {
-		const eq = part.indexOf("=");
-		if (eq < 0) continue;
-		const k = part.slice(0, eq).trim();
-		if (k === name) {
-			return decodeURIComponent(part.slice(eq + 1).trim());
-		}
+	let teamDomainUrl: URL;
+	try {
+		teamDomainUrl = new URL(env.CF_ACCESS_TEAM_DOMAIN?.trim());
+	} catch {
+		throw new AccessConfigurationError();
 	}
+
+	if (
+		teamDomainUrl.protocol !== "https:" ||
+		teamDomainUrl.username ||
+		teamDomainUrl.password ||
+		teamDomainUrl.pathname !== "/" ||
+		teamDomainUrl.search ||
+		teamDomainUrl.hash ||
+		!teamDomainUrl.hostname.endsWith(".cloudflareaccess.com") ||
+		!productionHostname ||
+		!productionAudience ||
+		!previewAudience
+	) {
+		throw new AccessConfigurationError();
+	}
+
+	return {
+		teamDomain: teamDomainUrl.origin,
+		productionHostname,
+		productionAudience,
+		previewAudience,
+	};
+}
+
+function getJwksInfrastructureErrorCode(error: unknown): string | undefined {
+	if (
+		error instanceof errors.JWKSTimeout ||
+		error instanceof errors.JWKSInvalid ||
+		error instanceof errors.JWKInvalid ||
+		(error instanceof errors.JOSEError && error.code === "ERR_JOSE_GENERIC")
+	) {
+		return error.code;
+	}
+
 	return undefined;
 }
 
-/** Set the admin cookie on a response. */
-export function setAdminCookie(c: Context, token: string): void {
-	c.header(
-		"set-cookie",
-		`${ADMIN_COOKIE}=${encodeURIComponent(token)}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${COOKIE_MAX_AGE_S}`,
-		{ append: true },
+function normalizeHostname(value: string | undefined): string | undefined {
+	const hostname = value?.trim().toLowerCase();
+	if (!hostname) return undefined;
+
+	try {
+		const parsed = new URL(`https://${hostname}`);
+		return parsed.host === hostname ? parsed.hostname : undefined;
+	} catch {
+		return undefined;
+	}
+}
+
+function isLoopbackHostname(hostname: string): boolean {
+	return (
+		hostname === "localhost" ||
+		hostname === "127.0.0.1" ||
+		hostname === "[::1]"
 	);
 }
 
-/** Clear the admin cookie (used by /admin/logout). */
-export function clearAdminCookie(c: Context): void {
-	c.header(
-		"set-cookie",
-		`${ADMIN_COOKIE}=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0`,
-		{ append: true },
+function usesSupportedAlgorithm(token: string): boolean {
+	try {
+		return decodeProtectedHeader(token).alg === "RS256";
+	} catch {
+		return false;
+	}
+}
+
+function isWorkersPreviewHostname(
+	hostname: string,
+	productionHostname: string,
+): boolean {
+	const productionLabels = productionHostname.split(".");
+	const hostnameLabels = hostname.split(".");
+	if (
+		productionLabels.length !== 4 ||
+		hostnameLabels.length !== productionLabels.length ||
+		productionLabels.slice(2).join(".") !== "workers.dev" ||
+		hostnameLabels.slice(1).join(".") !== productionLabels.slice(1).join(".")
+	) {
+		return false;
+	}
+
+	const productionWorker = productionLabels[0];
+	const previewLabel = hostnameLabels[0];
+	return (
+		previewLabel.length > productionWorker.length + 1 &&
+		previewLabel.endsWith(`-${productionWorker}`)
 	);
+}
+
+function getJwks(teamDomain: string): ReturnType<typeof createRemoteJWKSet> {
+	const cached = jwksByTeamDomain.get(teamDomain);
+	if (cached) return cached;
+
+	if (jwksByTeamDomain.size >= JWKS_CACHE_MAX_SIZE) {
+		const oldestTeamDomain = jwksByTeamDomain.keys().next().value;
+		if (oldestTeamDomain) jwksByTeamDomain.delete(oldestTeamDomain);
+	}
+
+	const jwks = createRemoteJWKSet(
+		new URL("/cdn-cgi/access/certs", teamDomain),
+		{
+			[customFetch]: async (url, options) => {
+				try {
+					return await fetch(url, options);
+				} catch (error) {
+					if (error instanceof Error && error.name === "TimeoutError") {
+						throw error;
+					}
+					throw new errors.JOSEError("JWKS request failed", { cause: error });
+				}
+			},
+		},
+	);
+	jwksByTeamDomain.set(teamDomain, jwks);
+	return jwks;
 }
 
 /**
- * Hono middleware that gates all /admin/* and /api/admin/* routes.
- *
- * - For `/admin/*` (browser routes), missing/invalid cookie → 302 to /admin/login.
- * - For `/api/admin/*` (XHR routes), missing/invalid cookie → 401 JSON.
- *
- * The login + logout routes are exempt (they're registered before this
- * middleware applies, but we also exclude them defensively).
+ * Hono middleware that validates Cloudflare Access JWTs for all admin routes.
+ * Loopback requests bypass Access for local development only.
  */
 export function adminAuthMiddleware(): MiddlewareHandler<{ Bindings: Env }> {
 	return async (c, next) => {
-		const path = new URL(c.req.url).pathname;
+		const requestUrl = new URL(c.req.url);
+		const hostname = requestUrl.hostname.toLowerCase();
+		if (isLoopbackHostname(hostname)) return next();
 
-		// Exempt the auth endpoints themselves.
+		const path = c.req.path;
+		const configuredProductionHostname = normalizeHostname(
+			c.env.CF_ACCESS_PRODUCTION_HOSTNAME,
+		);
+		const isAdminPage = path === "/admin" || path.startsWith("/admin/");
+		const isAdminApi =
+			path === "/api/admin" || path.startsWith("/api/admin/");
+		const isApi = path === "/api" || path.startsWith("/api/");
 		if (
-			path === "/admin/login" ||
-			path === "/admin/logout"
+			hostname === configuredProductionHostname &&
+			!isAdminPage &&
+			!isAdminApi
 		) {
 			return next();
 		}
 
-		const password = c.env.ADMIN_PASSWORD;
-		if (!password) {
-			// Fail closed if the secret isn't configured. Better to lock out
-			// admins than to leave the dashboard open.
-			return c.text("ADMIN_PASSWORD not configured", 500);
+		let config: AccessConfig;
+		try {
+			config = readAccessConfig(c.env);
+		} catch (error) {
+			const configError =
+				error instanceof AccessConfigurationError
+					? error
+					: new AccessConfigurationError();
+			console.error({
+				event: "admin_access_configuration_error",
+				error: configError.name,
+				code: configError.code,
+				hostname,
+			});
+			return isApi
+				? c.json({ error: "authentication unavailable" }, 500)
+				: c.text("Authentication unavailable", 500);
 		}
 
-		const token = readCookie(c, ADMIN_COOKIE);
-		const ok = await verifyAdminToken(token, password);
-		if (ok) {
+		const isProduction = hostname === config.productionHostname;
+		const isPreview = isWorkersPreviewHostname(
+			hostname,
+			config.productionHostname,
+		);
+		if (!isPreview && !(isProduction && (isAdminPage || isAdminApi))) {
+			if (isAdminPage || isAdminApi) {
+				return isApi
+					? c.json({ error: "unauthorized" }, 401)
+					: c.text("Unauthorized", 401);
+			}
 			return next();
 		}
 
-		if (path.startsWith("/api/admin/")) {
+		const audience = isProduction
+			? config.productionAudience
+			: config.previewAudience;
+		const token = c.req.header(ACCESS_JWT_HEADER);
+
+		if (audience && token && usesSupportedAlgorithm(token)) {
+			try {
+				await jwtVerify(token, getJwks(config.teamDomain), {
+					algorithms: ["RS256"],
+					issuer: config.teamDomain,
+					audience,
+				});
+				if (isAdminApi && !SAFE_METHODS.has(c.req.method)) {
+					const origin = c.req.header("Origin");
+					const requestedWith = c.req.header(REQUESTED_WITH_HEADER);
+					if (
+						origin !== requestUrl.origin ||
+						requestedWith !== REQUESTED_WITH_VALUE
+					) {
+						return c.json({ error: "forbidden" }, 403);
+					}
+				}
+				return next();
+			} catch (error) {
+				const infrastructureErrorCode =
+					getJwksInfrastructureErrorCode(error);
+				if (infrastructureErrorCode) {
+					console.error({
+						event: "admin_access_jwks_error",
+						error:
+							error instanceof Error ? error.name : "UnknownInfrastructureError",
+						code: infrastructureErrorCode,
+						hostname,
+					});
+					return isApi
+						? c.json({ error: "authentication unavailable" }, 503)
+						: c.text("Authentication unavailable", 503);
+				}
+			}
+		}
+
+		if (isApi) {
 			return c.json({ error: "unauthorized" }, 401);
 		}
-		return c.redirect("/admin/login", 302);
+		return c.text("Unauthorized", 401);
 	};
 }

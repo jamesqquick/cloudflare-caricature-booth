@@ -2,8 +2,8 @@
  * Print-agent auth — bearer token for the /api/print-agent/* endpoints.
  *
  * The print agent is a trusted machine client (a Node process running at the
- * venue), so instead of the signed-cookie scheme used for the browser-facing
- * admin dashboard, it presents a shared secret on every request:
+ * venue), so unlike the Cloudflare Access-protected admin dashboard, it
+ * presents a shared secret on every request:
  *
  *   Authorization: Bearer <token>
  *

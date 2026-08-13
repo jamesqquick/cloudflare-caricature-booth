@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { loadAdminSession } from '../lib/admin-data';
 import { page, escapeScriptJson } from '../lib/html';
 import { escapeHtml, escapeAttr } from '../lib/html';
-import { adminStatusClass, adminPrintClass, adminTimeTag, adminFmtDuration } from '../lib/admin-render';
+import { adminClientScript, adminStatusClass, adminPrintClass, adminTimeTag, adminFmtDuration } from '../lib/admin-render';
 import { confirmDialogFragment } from '../lib/confirm-dialog';
 import { UUID_RE } from '../lib/helpers';
 
@@ -123,9 +123,9 @@ app.get('/admin/sessions/:id', async (c) => {
 			`<div class="rounded-xl border border-white/10 bg-white/[0.02] p-4">` +
 			`<div class="flex items-center justify-between mb-3">` +
 			`<h3 class="text-sm font-semibold text-white/80">${label}</h3>` +
-			(allowDownload ? `<a href="${escapeAttr(downloadUrl)}" class="text-xs text-cf-orange hover:text-white underline underline-offset-2">Download</a>` : '') +
+			(allowDownload ? `<a href="#" data-admin-download="${escapeAttr(downloadUrl)}" class="text-xs text-cf-orange hover:text-white underline underline-offset-2">Download</a>` : '') +
 			`</div>` +
-			`<img src="${escapeAttr(fullUrl)}" alt="${escapeAttr(label)}" loading="lazy" class="w-full rounded-lg" />` +
+			`<img data-admin-src="${escapeAttr(fullUrl)}" alt="${escapeAttr(label)}" loading="lazy" class="w-full rounded-lg" />` +
 			`</div>`
 		);
 	}
@@ -186,9 +186,11 @@ app.get('/admin/sessions/:id', async (c) => {
 				</section>
 			</main>
 			${confirmDialogFragment()}
+			${adminClientScript()}
 
 			<script>
 			(function () {
+				var adminClient = window.CaricatureBoothAdmin;
 				var notyf = new Notyf({
 					duration: 4000,
 					position: { x: "right", y: "bottom" },
@@ -201,11 +203,7 @@ app.get('/admin/sessions/:id', async (c) => {
 				}
 
 				async function callJson(url, opts) {
-					var r = await fetch(url, Object.assign({ credentials: "same-origin" }, opts || {}));
-					if (r.status === 401) {
-						window.location.href = "/admin/login";
-						throw new Error("unauthorized");
-					}
+					var r = await adminClient.request(url, opts);
 					var body = await r.json().catch(function () { return {}; });
 					if (!r.ok) {
 						var err = (body && body.error) ? body.error : ("HTTP " + r.status);
@@ -262,7 +260,18 @@ app.get('/admin/sessions/:id', async (c) => {
 					});
 				});
 
+				var downloadLink = document.querySelector("[data-admin-download]");
+				if (downloadLink) {
+					downloadLink.addEventListener("click", function (e) {
+						e.preventDefault();
+						adminClient.download(downloadLink.getAttribute("data-admin-download")).catch(function (err) {
+							toast("Download failed: " + err.message, true);
+						});
+					});
+				}
+
 				formatTimes();
+				adminClient.loadImages(document);
 			})();
 			</script>`,
 		),

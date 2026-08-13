@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { loadEvent, loadAllScenes } from '../lib/event-ctx';
 import { page, escapeAttr, escapeHtml, escapeScriptJson } from '../lib/html';
-import { adminEventNav, eventStatusPill } from '../lib/admin-render';
+import { adminClientScript, adminEventNav, eventStatusPill } from '../lib/admin-render';
 import { confirmDialogFragment } from '../lib/confirm-dialog';
 
 const app = new Hono<{ Bindings: Env }>();
@@ -124,7 +124,7 @@ app.get('/admin/events/:eventSlug', async (c) => {
 									${
 										ev.watermark_image_key
 											? `<div class="inline-flex items-center gap-3 rounded-lg bg-white/5 border border-white/10 p-3">
-											<img src="/api/admin/events/${escapeAttr(ev.slug)}/watermark" alt="watermark" class="h-12" />
+											<img data-admin-src="/api/admin/events/${escapeAttr(ev.slug)}/watermark" alt="watermark" class="h-12" />
 											<button type="button" id="remove-watermark-btn" class="text-xs text-red-400 hover:text-red-300 underline">Remove</button>
 										</div>`
 											: `<p class="text-xs text-white/40 italic">No watermark set.</p>`
@@ -155,7 +155,7 @@ app.get('/admin/events/:eventSlug', async (c) => {
 									${
 										ev.watermark_image_key_left
 											? `<div class="inline-flex items-center gap-3 rounded-lg bg-white/5 border border-white/10 p-3">
-											<img src="/api/admin/events/${escapeAttr(ev.slug)}/watermark-left" alt="watermark left" class="h-12" />
+											<img data-admin-src="/api/admin/events/${escapeAttr(ev.slug)}/watermark-left" alt="watermark left" class="h-12" />
 											<button type="button" id="remove-watermark-left-btn" class="text-xs text-red-400 hover:text-red-300 underline">Remove</button>
 										</div>`
 											: `<p class="text-xs text-white/40 italic">No watermark set.</p>`
@@ -187,13 +187,13 @@ app.get('/admin/events/:eventSlug', async (c) => {
 							<div id="postcard-preview" style="position:relative;aspect-ratio:3/2;overflow:hidden;border-radius:0.5rem;border:1px solid rgba(255,255,255,0.1);background-color:#e5e7eb;background-image:repeating-conic-gradient(#d1d5db 0% 25%,#e5e7eb 0% 50%);background-size:16px 16px;">
 								${
 									ev.watermark_image_key
-										? `<img id="preview-wm-right" src="/api/admin/events/${escapeAttr(ev.slug)}/watermark"
+										? `<img id="preview-wm-right" data-admin-src="/api/admin/events/${escapeAttr(ev.slug)}/watermark"
 											style="position:absolute;bottom:${((56 / 1200) * 100).toFixed(2)}%;right:${((56 / 1800) * 100).toFixed(2)}%;width:${(((ev.watermark_w ?? 540) / 1800) * 100).toFixed(2)}%;opacity:0.95;" />`
 										: ''
 								}
 								${
 									ev.watermark_image_key_left
-										? `<img id="preview-wm-left" src="/api/admin/events/${escapeAttr(ev.slug)}/watermark-left"
+										? `<img id="preview-wm-left" data-admin-src="/api/admin/events/${escapeAttr(ev.slug)}/watermark-left"
 											style="position:absolute;bottom:${((56 / 1200) * 100).toFixed(2)}%;left:${((56 / 1800) * 100).toFixed(2)}%;width:${(((ev.watermark_left_w ?? 540) / 1800) * 100).toFixed(2)}%;opacity:0.95;" />`
 										: ''
 								}
@@ -271,10 +271,12 @@ app.get('/admin/events/:eventSlug', async (c) => {
 				</section>
 			</main>
 			${confirmDialogFragment()}
+			${adminClientScript()}
 
 			<script id="scenes-data" type="application/json">${scenesJson}</script>
 			<script>
 			(function () {
+				var adminClient = window.CaricatureBoothAdmin;
 				var EVENT_SLUG = ${JSON.stringify(ev.slug)};
 				var EVENT_NUMERIC_ID = ${JSON.stringify(ev.id)};
 				var notyf = new Notyf({ duration: 3000, position: { x: "right", y: "top" } });
@@ -301,9 +303,8 @@ app.get('/admin/events/:eventSlug', async (c) => {
 
 				// ---- Generic save helper ----
 				function saveFields(fields) {
-					return fetch("/api/admin/events/" + encodeURIComponent(EVENT_SLUG), {
+					return adminClient.request("/api/admin/events/" + encodeURIComponent(EVENT_SLUG), {
 						method: "PUT",
-						credentials: "same-origin",
 						headers: { "Content-Type": "application/json" },
 						body: JSON.stringify(fields),
 					}).then(function (r) { return r.json(); })
@@ -341,7 +342,7 @@ app.get('/admin/events/:eventSlug', async (c) => {
 						}).then(function (ok) {
 							if (!ok) return;
 							delBtn.disabled = true;
-							fetch("/api/admin/events/" + encodeURIComponent(EVENT_SLUG), { method: "DELETE", credentials: "same-origin" })
+							adminClient.request("/api/admin/events/" + encodeURIComponent(EVENT_SLUG), { method: "DELETE" })
 								.then(function (r) { return r.json(); })
 								.then(function (j) {
 									if (j.error) { toast(j.error, true); delBtn.disabled = false; return; }
@@ -369,8 +370,8 @@ app.get('/admin/events/:eventSlug', async (c) => {
 					var form = e.target;
 					var fd = new FormData(form);
 					if (!fd.get("file") || !fd.get("file").size) { toast("Select a PNG file", true); return; }
-					fetch("/api/admin/events/" + encodeURIComponent(EVENT_SLUG) + "/watermark", {
-						method: "POST", credentials: "same-origin", body: fd,
+					adminClient.request("/api/admin/events/" + encodeURIComponent(EVENT_SLUG) + "/watermark", {
+						method: "POST", body: fd,
 					}).then(function (r) { return r.json(); })
 					.then(function (j) {
 						if (j.error) { toast(j.error, true); return; }
@@ -384,7 +385,7 @@ app.get('/admin/events/:eventSlug', async (c) => {
 				if (rmWm) {
 					rmWm.addEventListener("click", function () {
 						rmWm.disabled = true;
-						fetch("/api/admin/events/" + encodeURIComponent(EVENT_SLUG) + "/watermark", { method: "DELETE", credentials: "same-origin" })
+						adminClient.request("/api/admin/events/" + encodeURIComponent(EVENT_SLUG) + "/watermark", { method: "DELETE" })
 							.then(function (r) { return r.json(); })
 							.then(function (j) {
 								if (j.error) { toast(j.error, true); rmWm.disabled = false; return; }
@@ -400,8 +401,8 @@ app.get('/admin/events/:eventSlug', async (c) => {
 					var form = e.target;
 					var fd = new FormData(form);
 					if (!fd.get("file") || !fd.get("file").size) { toast("Select a PNG file", true); return; }
-					fetch("/api/admin/events/" + encodeURIComponent(EVENT_SLUG) + "/watermark-left", {
-						method: "POST", credentials: "same-origin", body: fd,
+					adminClient.request("/api/admin/events/" + encodeURIComponent(EVENT_SLUG) + "/watermark-left", {
+						method: "POST", body: fd,
 					}).then(function (r) { return r.json(); })
 					.then(function (j) {
 						if (j.error) { toast(j.error, true); return; }
@@ -415,7 +416,7 @@ app.get('/admin/events/:eventSlug', async (c) => {
 				if (rmWmL) {
 					rmWmL.addEventListener("click", function () {
 						rmWmL.disabled = true;
-						fetch("/api/admin/events/" + encodeURIComponent(EVENT_SLUG) + "/watermark-left", { method: "DELETE", credentials: "same-origin" })
+						adminClient.request("/api/admin/events/" + encodeURIComponent(EVENT_SLUG) + "/watermark-left", { method: "DELETE" })
 							.then(function (r) { return r.json(); })
 							.then(function (j) {
 								if (j.error) { toast(j.error, true); rmWmL.disabled = false; return; }
@@ -550,8 +551,8 @@ app.get('/admin/events/:eventSlug', async (c) => {
 						scenesData[idx] = scenesData[swapIdx];
 						scenesData[swapIdx] = tmp;
 						var reorder = scenesData.map(function (s, i) { return { id: s.id, sort_order: i }; });
-						fetch("/api/admin/events/" + encodeURIComponent(EVENT_SLUG) + "/scenes/reorder", {
-							method: "PUT", credentials: "same-origin",
+						adminClient.request("/api/admin/events/" + encodeURIComponent(EVENT_SLUG) + "/scenes/reorder", {
+							method: "PUT",
 							headers: { "Content-Type": "application/json" },
 							body: JSON.stringify(reorder),
 						}).then(function (r) { return r.json(); })
@@ -573,8 +574,8 @@ app.get('/admin/events/:eventSlug', async (c) => {
 							prompt: card.querySelector('[data-field="prompt"]').value,
 						};
 						saveBtn.disabled = true;
-						fetch("/api/admin/events/" + encodeURIComponent(EVENT_SLUG) + "/scenes/" + encodeURIComponent(sceneId), {
-							method: "PUT", credentials: "same-origin",
+						adminClient.request("/api/admin/events/" + encodeURIComponent(EVENT_SLUG) + "/scenes/" + encodeURIComponent(sceneId), {
+							method: "PUT",
 							headers: { "Content-Type": "application/json" },
 							body: JSON.stringify(body),
 						}).then(function (r) { return r.json(); })
@@ -598,8 +599,8 @@ app.get('/admin/events/:eventSlug', async (c) => {
 						}).then(function (ok) {
 							if (!ok) return;
 							delBtn.disabled = true;
-							fetch("/api/admin/events/" + encodeURIComponent(EVENT_SLUG) + "/scenes/" + encodeURIComponent(sceneId), {
-								method: "DELETE", credentials: "same-origin",
+							adminClient.request("/api/admin/events/" + encodeURIComponent(EVENT_SLUG) + "/scenes/" + encodeURIComponent(sceneId), {
+								method: "DELETE",
 							}).then(function (r) { return r.json(); })
 							.then(function (j) {
 								if (j.error) { toast(j.error, true); delBtn.disabled = false; return; }
@@ -618,8 +619,8 @@ app.get('/admin/events/:eventSlug', async (c) => {
 					if (!toggle) return;
 					var sceneId = toggle.getAttribute("data-active-toggle");
 					var isActive = toggle.checked ? 1 : 0;
-					fetch("/api/admin/events/" + encodeURIComponent(EVENT_SLUG) + "/scenes/" + encodeURIComponent(sceneId), {
-						method: "PUT", credentials: "same-origin",
+					adminClient.request("/api/admin/events/" + encodeURIComponent(EVENT_SLUG) + "/scenes/" + encodeURIComponent(sceneId), {
+						method: "PUT",
 						headers: { "Content-Type": "application/json" },
 						body: JSON.stringify({ is_active: isActive }),
 					}).then(function (r) { return r.json(); })
@@ -646,8 +647,8 @@ app.get('/admin/events/:eventSlug', async (c) => {
 						sort_order: maxSort + 1,
 						is_active: 1,
 					};
-					fetch("/api/admin/events/" + encodeURIComponent(EVENT_SLUG) + "/scenes", {
-						method: "POST", credentials: "same-origin",
+					adminClient.request("/api/admin/events/" + encodeURIComponent(EVENT_SLUG) + "/scenes", {
+						method: "POST",
 						headers: { "Content-Type": "application/json" },
 						body: JSON.stringify(body),
 					}).then(function (r) { return r.json(); })
@@ -662,6 +663,8 @@ app.get('/admin/events/:eventSlug', async (c) => {
 						toast("Scene created");
 					}).catch(function (err) { toast(err.message, true); });
 				});
+
+				adminClient.loadImages(document);
 			})();
 			</script>`,
 		),

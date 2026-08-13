@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { listEvents } from '../lib/event-ctx';
 import { page, escapeAttr, escapeHtml } from '../lib/html';
-import { adminEventNav, eventStatusPill } from '../lib/admin-render';
+import { adminClientScript, adminEventNav, eventStatusPill } from '../lib/admin-render';
 import { confirmDialogFragment } from '../lib/confirm-dialog';
 
 const app = new Hono<{ Bindings: Env }>();
@@ -85,8 +85,10 @@ app.get('/admin/events', async (c) => {
 				</section>
 			</main>
 			${confirmDialogFragment()}
+			${adminClientScript()}
 			<script>
 			(function () {
+				var adminClient = window.CaricatureBoothAdmin;
 				var notyf = new Notyf({ duration: 3000, position: { x: "right", y: "top" } });
 				function toast(msg, isErr) { notyf[isErr ? "error" : "success"](msg); }
 
@@ -98,7 +100,7 @@ app.get('/admin/events', async (c) => {
 
 					if (action === "clone-event") {
 						btn.disabled = true;
-						fetch("/api/admin/events/" + encodeURIComponent(eventSlug) + "/clone", { method: "POST", credentials: "same-origin" })
+						adminClient.request("/api/admin/events/" + encodeURIComponent(eventSlug) + "/clone", { method: "POST" })
 							.then(function (r) { return r.json(); })
 							.then(function (j) {
 								if (j.error) { toast(j.error, true); btn.disabled = false; return; }
@@ -116,7 +118,7 @@ app.get('/admin/events', async (c) => {
 						}).then(function (ok) {
 							if (!ok) return;
 							btn.disabled = true;
-							fetch("/api/admin/events/" + encodeURIComponent(eventSlug), { method: "DELETE", credentials: "same-origin" })
+							adminClient.request("/api/admin/events/" + encodeURIComponent(eventSlug), { method: "DELETE" })
 								.then(function (r) { return r.json(); })
 								.then(function (j) {
 									if (j.error) { toast(j.error, true); btn.disabled = false; return; }
@@ -169,8 +171,10 @@ app.get('/admin/events/new', (c) => {
 					</button>
 				</form>
 			</main>
+			${adminClientScript()}
 			<script>
 			(function () {
+				var adminClient = window.CaricatureBoothAdmin;
 				var form = document.getElementById("create-form");
 				var nameInput = form.querySelector('[name="name"]');
 				var slugInput = form.querySelector('[name="slug"]');
@@ -195,9 +199,8 @@ app.get('/admin/events/new', (c) => {
 						name: nameInput.value,
 						status: form.querySelector('[name="status"]').value,
 					};
-					fetch("/api/admin/events", {
+					adminClient.request("/api/admin/events", {
 						method: "POST",
-						credentials: "same-origin",
 						headers: { "Content-Type": "application/json" },
 						body: JSON.stringify(body),
 					})

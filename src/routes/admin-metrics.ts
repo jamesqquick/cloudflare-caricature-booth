@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { page } from '../lib/html';
+import { adminClientScript } from '../lib/admin-render';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -22,7 +23,7 @@ app.get('/admin/metrics', async (c) => {
 			<div class="flex items-center gap-4 text-xs text-white/50">
 				<a href="/admin" class="text-cf-orange hover:text-white underline underline-offset-4">\u2190 Dashboard</a>
 				<a href="/admin/events" class="text-cf-orange hover:text-white underline underline-offset-4">Events</a>
-				<a href="/admin/logout" class="text-cf-orange hover:text-white underline underline-offset-4">Sign out</a>
+				<a href="/cdn-cgi/access/logout" class="text-cf-orange hover:text-white underline underline-offset-4">Sign out</a>
 			</div>
 		</header>
 		<div class="rounded-xl border border-white/10 bg-white/[0.02] p-8 text-center">
@@ -50,7 +51,7 @@ app.get('/admin/metrics', async (c) => {
 					<div class="flex items-center gap-4 text-xs text-white/50">
 						<a href="/admin" class="text-cf-orange hover:text-white underline underline-offset-4">\u2190 Dashboard</a>
 						<a href="/admin/events" class="text-cf-orange hover:text-white underline underline-offset-4">Events</a>
-						<a href="/admin/logout" class="text-cf-orange hover:text-white underline underline-offset-4">Sign out</a>
+						<a href="/cdn-cgi/access/logout" class="text-cf-orange hover:text-white underline underline-offset-4">Sign out</a>
 					</div>
 				</header>
 
@@ -69,8 +70,10 @@ app.get('/admin/metrics', async (c) => {
 
 				<p id="metrics-updated" class="mt-4 text-center text-[11px] uppercase tracking-widest text-white/30"></p>
 			</main>
+			${adminClientScript()}
 			<script>
 			(function () {
+				var adminClient = window.CaricatureBoothAdmin;
 				var cardsEl = document.getElementById("metrics-cards");
 				var timelineEl = document.getElementById("metrics-timeline");
 				var updatedEl = document.getElementById("metrics-updated");
@@ -113,8 +116,7 @@ app.get('/admin/metrics', async (c) => {
 
 				async function loadMetrics() {
 					try {
-						var res = await fetch("/api/admin/metrics", { credentials: "same-origin" });
-						if (res.status === 401) { window.location.href = "/admin/login"; return; }
+						var res = await adminClient.request("/api/admin/metrics");
 						if (!res.ok) throw new Error("HTTP " + res.status);
 						var data = await res.json();
 

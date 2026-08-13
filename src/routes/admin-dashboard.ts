@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { loadAdminSessions, loadAdminStats, countAdminSessions, SESSIONS_PER_PAGE } from '../lib/admin-data';
 import { page, escapeScriptJson } from '../lib/html';
-import { renderAdminStatCards, renderAdminSceneBreakdown, renderAdminCardGrid } from '../lib/admin-render';
+import { adminClientScript, renderAdminStatCards, renderAdminSceneBreakdown, renderAdminCardGrid } from '../lib/admin-render';
 import { confirmDialogFragment } from '../lib/confirm-dialog';
 
 const app = new Hono<{ Bindings: Env }>();
@@ -38,7 +38,7 @@ app.get('/admin', async (c) => {
 						</span>
 						<a href="/admin/events" class="text-cf-orange hover:text-white underline underline-offset-4">Events</a>
 						<a href="/admin/metrics" class="text-cf-orange hover:text-white underline underline-offset-4">Metrics</a>
-						<a href="/admin/logout" class="text-cf-orange hover:text-white underline underline-offset-4">Sign out</a>
+						<a href="/cdn-cgi/access/logout" class="text-cf-orange hover:text-white underline underline-offset-4">Sign out</a>
 					</div>
 				</header>
 
@@ -96,8 +96,10 @@ app.get('/admin', async (c) => {
 			${confirmDialogFragment()}
 
 			<script id="admin-initial" type="application/json">${escapeScriptJson(initialJson)}</script>
+			${adminClientScript()}
 			<script>
 			(function () {
+				var adminClient = window.CaricatureBoothAdmin;
 				var initialEl = document.getElementById("admin-initial");
 				var lastSnapshot = JSON.parse(initialEl.textContent || '{"sessions":[],"stats":null,"page":1,"totalPages":1}');
 				var gridEl = document.getElementById("admin-grid");
@@ -153,7 +155,7 @@ app.get('/admin', async (c) => {
 
 					var imageHtml;
 					if (isCompleted && r.postcardKey) {
-						imageHtml = '<img src="' + escapeHtml(thumbUrl(r.postcardKey)) + '" alt="Postcard" loading="lazy" class="absolute inset-0 w-full h-full object-cover" />';
+						imageHtml = '<img data-admin-src="' + escapeHtml(thumbUrl(r.postcardKey)) + '" alt="Postcard" loading="lazy" class="absolute inset-0 w-full h-full object-cover" />';
 					} else if (isErrored) {
 						imageHtml = '<div class="absolute inset-0 flex flex-col items-center justify-center bg-red-500/10 px-4">'
 							+ '<span class="text-3xl mb-2">&#x26A0;</span>'
@@ -239,6 +241,7 @@ app.get('/admin', async (c) => {
 					} else {
 						gridEl.innerHTML = sessions.map(renderCard).join("");
 					}
+					adminClient.loadImages(gridEl);
 				}
 
 				function updatePagination() {
@@ -260,13 +263,9 @@ app.get('/admin', async (c) => {
 				async function poll() {
 					try {
 						var results = await Promise.all([
-							fetch("/api/admin/sessions?page=" + currentPage, { credentials: "same-origin" }),
-							fetch("/api/admin/stats",    { credentials: "same-origin" }),
+							adminClient.request("/api/admin/sessions?page=" + currentPage),
+							adminClient.request("/api/admin/stats"),
 						]);
-						if (results[0].status === 401 || results[1].status === 401) {
-							window.location.href = "/admin/login";
-							return;
-						}
 						if (!results[0].ok || !results[1].ok) {
 							throw new Error("HTTP " + results[0].status + "/" + results[1].status);
 						}
@@ -311,11 +310,7 @@ app.get('/admin', async (c) => {
 				}
 
 				async function callJson(url, opts) {
-					var r = await fetch(url, Object.assign({ credentials: "same-origin" }, opts || {}));
-					if (r.status === 401) {
-						window.location.href = "/admin/login";
-						throw new Error("unauthorized");
-					}
+					var r = await adminClient.request(url, opts);
 					var body = await r.json().catch(function () { return {}; });
 					if (!r.ok) {
 						var err = (body && body.error) ? body.error : ("HTTP " + r.status);
@@ -418,6 +413,7 @@ app.get('/admin', async (c) => {
 				}
 
 				formatTimes();
+				adminClient.loadImages(gridEl);
 				attachCardHovers();
 				setInterval(poll, 10000);
 			})();

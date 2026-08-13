@@ -12,7 +12,6 @@ import { scenesApiRoutes } from './routes/scenes-api';
 import { printAgentRoutes } from './routes/print-agent';
 
 // Admin routes
-import { adminAuthPages } from './routes/admin-auth-pages';
 import { adminDashboardRoutes } from './routes/admin-dashboard';
 import { adminDashboardApiRoutes } from './routes/admin-dashboard-api';
 import { adminMetricsRoutes } from './routes/admin-metrics';
@@ -51,10 +50,8 @@ export { SessionDO } from './session/session';
 
 const app = new Hono<{ Bindings: Env }>();
 
-// Admin auth middleware — applies to all /admin/* and /api/admin/* routes.
-// /admin/login (GET + POST) and /admin/logout are exempted inside the middleware.
-app.use('/admin/*', adminAuthMiddleware());
-app.use('/api/admin/*', adminAuthMiddleware());
+// Cloudflare Access protects admin routes in production and every Preview route.
+app.use('*', adminAuthMiddleware());
 
 // Print-agent auth middleware — bearer token (ADMIN_PASSWORD) on the
 // machine-to-machine print queue endpoints.
@@ -67,7 +64,6 @@ app.route('/', scenesApiRoutes);
 app.route('/', printAgentRoutes);
 
 // Admin pages
-app.route('/', adminAuthPages);
 app.route('/', adminDashboardRoutes);
 app.route('/', adminDashboardApiRoutes);
 app.route('/', adminMetricsRoutes);
