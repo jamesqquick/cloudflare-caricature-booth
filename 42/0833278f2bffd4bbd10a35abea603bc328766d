@@ -1,0 +1,31 @@
+src/routes/event/kiosk-api.ts
+  s_6c282c04d9a186::t_608c7c0b68e1bb 27,32,57,98-100
+src/routes/event/kiosk-capture.ts
+  s_ff3c1ffedf7042::t_16cb6f9cd5af93 8,12,65,222-232,250,477,495-518
+src/routes/event/landing.ts
+  s_ff3c1ffedf7042::t_e862e3ddff2791 8,12,17-46,49-51,54-55,59,63-72,74-75,78-79,81-122
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "420833278f2bffd4bbd10a35abea603bc328766d",
+  "prompts": {},
+  "sessions": {
+    "s_6c282c04d9a186": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0086e3cfcffezWT3ZtXCjrEEHg",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "James Quick <jquick@cloudflare.com>"
+    },
+    "s_ff3c1ffedf7042": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_00d7c189bffewD771JxNwEVlBk",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "James Quick <jquick@cloudflare.com>"
+    }
+  }
+}
