@@ -61,8 +61,7 @@ app.get('/', async (c) => {
 					</p>
 
 					<div class="mt-6 sm:mt-8 w-full max-w-2xl">
-						<h2 class="text-[clamp(1.35rem,4vw,2rem)] font-bold leading-tight">${escapeAttr(event.scene_picker_heading)}</h2>
-						<p class="mt-1 text-sm sm:text-base text-white/60">Choose where your caricature should take place.</p>
+
 						<div id="scene-grid" class="mt-4 grid ${sceneGridColumns} gap-3 sm:gap-4">
 							${cards}
 						</div>
@@ -70,14 +69,11 @@ app.get('/', async (c) => {
 
 					<button id="kiosk-start" type="button" disabled
 						class="mt-7 inline-flex items-center justify-center rounded-full bg-cf-orange px-14 py-5 text-xl sm:px-16 sm:py-6 sm:text-2xl font-bold text-black shadow-[0_0_60px_rgba(246,130,31,0.45)] transition hover:bg-cf-orange-dark active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none">
-						Tap to start
+						Start
 					</button>
-					<p id="scene-status" role="status" aria-live="polite" class="mt-3 min-h-5 text-sm text-white/50">Choose a scene to continue.</p>
+
 				</section>
 
-				<footer class="px-8 pt-8 pb-8 text-center text-[11px] uppercase tracking-[0.25em] text-white/30">
-					We don't store your photo after the event &middot; <a href="${basePath}/privacy" class="underline underline-offset-2 hover:text-white/50">Privacy</a>
-				</footer>
 			</main>
 			<script>
 			(function () {
@@ -111,7 +107,6 @@ app.get('/', async (c) => {
 					});
 					sessionStorage.setItem("kiosk:scene", JSON.stringify(selectedScene));
 					startBtn.disabled = false;
-					statusEl.textContent = selectedScene.sceneName + " selected.";
 				});
 
 				startBtn.addEventListener("click", function () {
