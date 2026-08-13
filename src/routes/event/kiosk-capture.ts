@@ -5,48 +5,43 @@ import { kioskPage } from '../../lib/html';
 const app = new Hono<EventEnv>();
 
 /**
- * Live camera capture screen (step 1 of 3).
+ * Live camera capture screen
  * GET /kiosk/capture
  */
 app.get('/kiosk/capture', (c) => {
 	const basePath = c.get('basePath');
-	const origin = new URL(c.req.url).origin;
-	const eventUrl = `${origin}${basePath}/`;
-	const qrSrc = `${basePath}/api/kiosk/qr?url=${encodeURIComponent(eventUrl)}`;
 	return c.html(
 		kioskPage(
 			'Capture your selfie',
-			`			<div class="flex justify-center pt-4 sm:fixed sm:top-4 sm:left-4 sm:z-50 sm:pt-0 sm:block">
-				<img src="${qrSrc}" alt="QR code — scan to open this page"
-					class="w-20 sm:w-24 rounded-xl border border-white/10 bg-white p-1.5" />
-			</div>
-			<main id="capture-root" class="min-h-[100dvh] h-[100dvh] w-full flex flex-col">
-				<header class="shrink-0 px-6 pt-4 sm:pt-8 pb-2 flex items-center justify-between">
-					<a href="${basePath}/kiosk" class="text-sm text-white/50 hover:text-white sm:pl-32">← Cancel</a>
-					<span class="text-xs uppercase tracking-[0.25em] text-white/40 hidden sm:inline">Step 1 of 3 · Selfie</span>
-					<button id="cap-mute" type="button" aria-label="Mute sounds" aria-pressed="false"
-						class="flex size-11 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/70 transition hover:border-white/30 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cf-orange active:scale-95">
-						<svg id="cap-sound-on-icon" class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-							<path d="M11 5 6 9H2v6h4l5 4V5Z"></path>
-							<path d="M15.5 8.5a5 5 0 0 1 0 7"></path>
-							<path d="M18.5 5.5a9 9 0 0 1 0 13"></path>
-						</svg>
-						<svg id="cap-muted-icon" class="hidden size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-							<path d="M11 5 6 9H2v6h4l5 4V5Z"></path>
-							<path d="m22 9-6 6"></path>
-							<path d="m16 9 6 6"></path>
-						</svg>
-					</button>
-				</header>
+			`			<main id="capture-root" class="studio-shell">
+				<div class="studio-topbar">
+					<a href="${basePath}/kiosk" class="studio-mobile-cancel">Cancel</a>
+					<div class="studio-utilities">
+						<button id="cap-mute" type="button" aria-label="Mute sounds" aria-pressed="false" class="studio-mute">
+								<svg id="cap-sound-on-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+									<path d="M11 5 6 9H2v6h4l5 4V5Z"></path>
+									<path d="M15.5 8.5a5 5 0 0 1 0 7"></path>
+									<path d="M18.5 5.5a9 9 0 0 1 0 13"></path>
+								</svg>
+								<svg id="cap-muted-icon" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+									<path d="M11 5 6 9H2v6h4l5 4V5Z"></path>
+									<path d="m22 9-6 6"></path>
+									<path d="m16 9 6 6"></path>
+								</svg>
+						</button>
+					</div>
+				</div>
 
-				<section class="flex-1 min-h-0 flex flex-col items-center justify-center px-4 sm:px-6 py-2 gap-3">
-					<div class="relative h-full w-full max-w-[640px] max-h-full flex items-center justify-center">
-						<div class="relative h-full max-h-full aspect-[3/4] rounded-[2.5rem] overflow-hidden bg-black/60 ring-1 ring-white/10 shadow-[0_0_60px_rgba(246,130,31,0.15)]">
+				<section class="studio-stage" aria-label="Photo capture">
+					<div class="studio-capture">
+						<div class="studio-viewfinder">
 							<video id="cap-video" class="absolute inset-0 h-full w-full object-cover -scale-x-100" playsinline muted autoplay></video>
 							<img id="cap-preview" class="absolute inset-0 h-full w-full object-cover hidden -scale-x-100" alt="captured frame" />
-							<div class="absolute inset-0 pointer-events-none flex items-center justify-center">
-								<div class="size-[78%] rounded-full border-2 border-white/30 mix-blend-screen"></div>
+							<div class="studio-guide-wrap" aria-hidden="true">
+								<div class="studio-guide"></div>
 							</div>
+							<span class="studio-corner studio-corner-top" aria-hidden="true"></span>
+							<span class="studio-corner studio-corner-bottom" aria-hidden="true"></span>
 							<div id="cap-flash" class="absolute inset-0 bg-white pointer-events-none z-20 opacity-0 hidden"></div>
 							<div id="cap-countdown" class="absolute inset-0 hidden flex items-center justify-center pointer-events-none z-10">
 								<span id="cap-countdown-num" class="text-[10rem] sm:text-[12rem] font-black text-white drop-shadow-[0_0_40px_rgba(255,255,255,0.5)] leading-none countdown-pop"></span>
@@ -56,38 +51,155 @@ app.get('/kiosk/capture', (c) => {
 								<p class="mt-2 text-sm text-white/60">If you see a permissions prompt, tap Allow.</p>
 							</div>
 						</div>
-					</div>
 
-					<p id="cap-hint" class="shrink-0 text-xs sm:text-sm text-white/60 text-center max-w-md">
-						Frame your face inside the circle. Tap the shutter when you're ready.
-					</p>
+						<div class="studio-controls">
+							<p id="cap-hint" class="sr-only">Ready to take photo.</p>
+							<div id="cap-shutter-row" class="studio-shutter-row flex">
+								<button id="cap-shutter" type="button" disabled class="studio-shutter">
+									<span class="sr-only">Take photo</span>
+								</button>
+								<span class="studio-shutter-label">Take photo</span>
+							</div>
+							<div id="cap-confirm-row" class="studio-confirm hidden flex-col">
+								<button id="cap-use" type="button" class="studio-use">Use this photo</button>
+								<button id="cap-retake" type="button" class="studio-retake">Retake</button>
+							</div>
+							<p id="cap-status" class="studio-status" aria-live="polite"></p>
+						</div>
+					</div>
 				</section>
-
-				<footer class="shrink-0 px-6 pt-2 pb-4 sm:pb-8" style="padding-bottom: max(1rem, env(safe-area-inset-bottom));">
-					<div id="cap-shutter-row" class="flex items-center justify-center">
-						<button id="cap-shutter" disabled
-							class="size-16 sm:size-24 rounded-full bg-white border-[5px] sm:border-[6px] border-white/30 shadow-[0_0_40px_rgba(255,255,255,0.35)] disabled:opacity-40 disabled:shadow-none active:scale-95 transition">
-							<span class="sr-only">Take photo</span>
-						</button>
-					</div>
-					<div id="cap-confirm-row" class="hidden flex-col gap-2 sm:gap-3 items-stretch max-w-md mx-auto">
-						<button id="cap-use"
-							class="rounded-full bg-cf-orange px-8 py-3 sm:py-5 text-base sm:text-xl font-bold text-black shadow-[0_0_40px_rgba(246,130,31,0.45)] hover:bg-cf-orange-dark active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed transition">
-							Use this photo
-						</button>
-						<button id="cap-retake"
-							class="rounded-full border border-white/30 px-8 py-2.5 sm:py-4 text-sm sm:text-base text-white/80 hover:border-white/60 hover:text-white active:scale-[0.98] transition">
-							Retake
-						</button>
-					</div>
-					<p id="cap-status" class="mt-2 sm:mt-4 text-center text-[11px] sm:text-xs text-white/40 min-h-[1rem]"></p>
-					<p class="mt-2 text-center text-[10px] uppercase tracking-[0.2em] text-white/25">
-						We don't store your photo after the event · <a href="${basePath}/privacy" class="underline underline-offset-2 hover:text-white/40">Privacy</a>
-					</p>
-				</footer>
 			</main>
 
 			<style>
+			#capture-root {
+				--studio-ink: oklch(16% 0.012 55);
+				--studio-panel: oklch(20% 0.014 55);
+				--studio-paper: oklch(96% 0.012 70);
+				--studio-muted: oklch(72% 0.012 70);
+				--studio-orange: oklch(72% 0.19 52);
+				background: var(--studio-ink);
+				color: var(--studio-paper);
+				height: 100dvh;
+				min-height: 100dvh;
+				overflow: hidden;
+				position: relative;
+			}
+			.studio-topbar {
+				align-items: center;
+				display: flex;
+				gap: 0.5rem;
+				justify-content: space-between;
+				left: 0;
+				padding: max(1rem, env(safe-area-inset-top)) 1.25rem 0;
+				position: absolute;
+				right: 0;
+				top: 0;
+				z-index: 30;
+			}
+			.studio-utilities { align-items: center; display: flex; gap: 0.7rem; margin-left: auto; }
+			.studio-qr { background: var(--studio-paper); border-radius: 0.65rem; padding: 0.3rem; width: 3.25rem; }
+			.studio-mobile-cancel { display: none; }
+			.studio-mute {
+				align-items: center;
+				background: oklch(96% 0.012 70 / 0.05);
+				border: 1px solid oklch(96% 0.012 70 / 0.15);
+				border-radius: 50%;
+				color: var(--studio-muted);
+				cursor: pointer;
+				display: flex;
+				height: 2.75rem;
+				justify-content: center;
+				transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, transform 180ms ease;
+				width: 2.75rem;
+			}
+			.studio-mute svg { height: 1.25rem; width: 1.25rem; }
+			.studio-mute:active { transform: scale(0.95); }
+			.studio-mute.is-muted { background: oklch(72% 0.19 52 / 0.15); border-color: oklch(72% 0.19 52 / 0.5); color: var(--studio-orange); }
+			.studio-stage { display: grid; height: 100%; min-width: 0; padding: clamp(1.25rem, 3vw, 2.75rem); place-items: center; }
+			.studio-capture {
+				align-items: center;
+				display: flex;
+				flex-direction: column;
+				gap: 1rem;
+				max-width: 38rem;
+				width: 100%;
+			}
+			.studio-viewfinder {
+				aspect-ratio: 4 / 5;
+				background: var(--studio-panel);
+				border-radius: 2.15rem;
+				box-shadow: 0 2.2rem 5.5rem oklch(5% 0.01 55 / 0.6);
+				height: min(calc(100dvh - 17rem), 42.5rem);
+				max-width: 100%;
+				overflow: hidden;
+				position: relative;
+				width: auto;
+			}
+			.studio-guide-wrap { align-items: center; display: flex; inset: 0; justify-content: center; pointer-events: none; position: absolute; }
+			.studio-guide {
+				border: 2px solid oklch(96% 0.012 70 / 0.7);
+				border-radius: 48% 48% 44% 44%;
+				height: 68%;
+				width: 70%;
+			}
+			.studio-corner { border-color: var(--studio-orange); border-style: solid; height: 2rem; position: absolute; width: 2rem; }
+			.studio-corner-top { border-width: 3px 0 0 3px; left: 1.4rem; top: 1.4rem; }
+			.studio-corner-bottom { border-width: 0 3px 3px 0; bottom: 1.4rem; right: 1.4rem; }
+			.studio-controls { align-items: center; display: flex; flex-direction: column; text-align: center; width: min(100%, 34rem); }
+			.studio-shutter-row { align-items: center; flex-direction: column; }
+			.studio-shutter {
+				background: var(--studio-orange);
+				border: 7px solid var(--studio-paper);
+				border-radius: 50%;
+				box-shadow: 0 0 0 7px oklch(96% 0.012 70 / 0.13), 0 1.1rem 2.8rem oklch(5% 0.01 55 / 0.45);
+				cursor: pointer;
+				height: clamp(5rem, 9vw, 6.5rem);
+				margin: 1.5rem 0 1rem;
+				transition: opacity 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+				width: clamp(5rem, 9vw, 6.5rem);
+			}
+			.studio-shutter:active { transform: scale(0.95); }
+			.studio-shutter:disabled { box-shadow: none; cursor: wait; opacity: 0.4; }
+			.studio-shutter-label { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; }
+			.studio-confirm { gap: 0.75rem; margin-top: 1.25rem; width: 100%; }
+			.studio-use, .studio-retake {
+				border-radius: 999px;
+				cursor: pointer;
+				font-weight: 750;
+				min-height: 3.25rem;
+				padding: 0.75rem 1.25rem;
+				transition: background-color 180ms ease, border-color 180ms ease, filter 180ms ease, opacity 180ms ease, transform 180ms ease;
+			}
+			.studio-use { background: var(--studio-orange); color: var(--studio-ink); }
+			.studio-retake { border: 1px solid oklch(96% 0.012 70 / 0.3); color: var(--studio-paper); }
+			.studio-use:active, .studio-retake:active { transform: scale(0.98); }
+			.studio-use:disabled, .studio-retake:disabled { cursor: wait; opacity: 0.55; }
+			.studio-status { color: var(--studio-muted); font-size: 0.72rem; line-height: 1rem; margin-top: 0.75rem; min-height: 1rem; }
+			#capture-root button:focus-visible, #capture-root a:focus-visible { outline: 3px solid var(--studio-orange); outline-offset: 4px; }
+			@media (hover: hover) {
+				.studio-shutter:not(:disabled):hover, .studio-use:not(:disabled):hover { filter: brightness(1.08); }
+				.studio-retake:not(:disabled):hover { background: oklch(96% 0.012 70 / 0.08); border-color: oklch(96% 0.012 70 / 0.55); }
+				.studio-mute:hover { background: oklch(96% 0.012 70 / 0.1); border-color: oklch(96% 0.012 70 / 0.3); color: var(--studio-paper); }
+				.studio-mute.is-muted:hover { background: oklch(72% 0.19 52 / 0.22); border-color: var(--studio-orange); color: var(--studio-orange); }
+			}
+
+			@media (max-width: 879px) {
+				.studio-mobile-cancel { align-items: center; color: var(--studio-muted); display: inline-flex; font-size: 0.78rem; min-height: 2.75rem; }
+				.studio-stage { min-height: 0; padding: 5rem 1rem max(0.75rem, env(safe-area-inset-bottom)); }
+				.studio-capture { display: flex; flex-direction: column; gap: 0.75rem; height: 100%; }
+				.studio-viewfinder { flex: 1; height: auto; max-height: calc(100dvh - 10.75rem); min-height: 0; width: min(100%, 29rem); }
+				.studio-controls { width: min(100%, 29rem); }
+				.studio-shutter { border-width: 6px; height: 4.65rem; margin: 0 0 0.45rem; width: 4.65rem; }
+				.studio-confirm { flex-direction: row; margin-top: 0.5rem; }
+				.studio-use, .studio-retake { flex: 1; }
+				.studio-status { margin-top: 0.35rem; }
+			}
+			@media (max-width: 879px) and (orientation: landscape) {
+				.studio-stage { padding-inline: 1.25rem; }
+				.studio-viewfinder { max-height: calc(100dvh - 11.5rem); width: auto; }
+				.studio-controls { width: 100%; }
+				.studio-shutter { height: 4.8rem; width: 4.8rem; }
+			}
 			@keyframes countdown-pop {
 				0% { transform: scale(0.5); opacity: 0; }
 				20% { transform: scale(1.15); opacity: 1; }
@@ -138,9 +250,7 @@ app.get('/kiosk/capture', (c) => {
 					muteBtn.setAttribute("aria-pressed", String(isMuted));
 					soundOnIcon.classList.toggle("hidden", isMuted);
 					mutedIcon.classList.toggle("hidden", !isMuted);
-					muteBtn.classList.toggle("border-cf-orange/50", isMuted);
-					muteBtn.classList.toggle("bg-cf-orange/15", isMuted);
-					muteBtn.classList.toggle("text-cf-orange", isMuted);
+					muteBtn.classList.toggle("is-muted", isMuted);
 				}
 
 				muteBtn.addEventListener("click", function () {
