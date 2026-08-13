@@ -28,7 +28,6 @@ import { adminSessionDetailRoutes } from './routes/admin-session-detail';
 // Event-scoped routes
 import { eventLandingRoutes } from './routes/event/landing';
 import { privacyRoutes } from './routes/event/privacy';
-import { kioskIdleRoutes } from './routes/event/kiosk-idle';
 import { kioskCaptureRoutes } from './routes/event/kiosk-capture';
 import { kioskSceneRoutes } from './routes/event/kiosk-scene';
 import { kioskReviewRoutes } from './routes/event/kiosk-review';
@@ -120,7 +119,6 @@ eventApp.use('*', async (c, next) => {
 // Mount event-scoped routes
 eventApp.route('/', eventLandingRoutes);
 eventApp.route('/', privacyRoutes);
-eventApp.route('/', kioskIdleRoutes);
 eventApp.route('/', kioskCaptureRoutes);
 eventApp.route('/', kioskSceneRoutes);
 eventApp.route('/', kioskReviewRoutes);

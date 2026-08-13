@@ -55,7 +55,7 @@ app.get('/gallery', async (c) => {
 	</div>`;
 
 	const origin = new URL(c.req.url).origin;
-	const qrTarget = `${origin}${basePath}/kiosk`;
+	const qrTarget = `${origin}${basePath}`;
 
 	return c.html(
 		page(
@@ -73,7 +73,7 @@ app.get('/gallery', async (c) => {
 						<h1 class="text-5xl md:text-6xl font-black tracking-tight">Fresh from the booth</h1>
 						<p class="mt-3 text-lg text-white/60">AI caricature postcards, generated live on Cloudflare.</p>
 					</div>
-					<a href="${basePath}/kiosk" class="hidden md:inline-flex items-center gap-2 rounded-full bg-cf-orange px-6 py-3 text-base font-semibold text-black hover:bg-cf-orange-dark transition">
+					<a href="${basePath}" class="hidden md:inline-flex items-center gap-2 rounded-full bg-cf-orange px-6 py-3 text-base font-semibold text-black hover:bg-cf-orange-dark transition">
 						Create yours now
 					</a>
 				</div>

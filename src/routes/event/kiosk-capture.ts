@@ -11,7 +11,7 @@ const app = new Hono<EventEnv>();
 app.get('/kiosk/capture', (c) => {
 	const basePath = c.get('basePath');
 	const origin = new URL(c.req.url).origin;
-	const eventUrl = `${origin}${basePath}/`;
+	const eventUrl = `${origin}${basePath}`;
 	const qrSrc = `${basePath}/api/kiosk/qr?url=${encodeURIComponent(eventUrl)}`;
 	return c.html(
 		kioskPage(
@@ -22,7 +22,7 @@ app.get('/kiosk/capture', (c) => {
 			</div>
 			<main id="capture-root" class="min-h-[100dvh] h-[100dvh] w-full flex flex-col">
 				<header class="shrink-0 px-6 pt-4 sm:pt-8 pb-2 flex items-center justify-between">
-					<a href="${basePath}/kiosk" class="text-sm text-white/50 hover:text-white sm:pl-32">← Cancel</a>
+					<a href="${basePath}" class="text-sm text-white/50 hover:text-white sm:pl-32">← Cancel</a>
 					<span class="text-xs uppercase tracking-[0.25em] text-white/40 hidden sm:inline">Step 1 of 3 · Selfie</span>
 					<button id="cap-mute" type="button" aria-label="Mute sounds" aria-pressed="false"
 						class="flex size-11 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/70 transition hover:border-white/30 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cf-orange active:scale-95">
@@ -236,7 +236,7 @@ app.get('/kiosk/capture', (c) => {
 							'<div class="size-16 rounded-full border-2 border-red-400/30 bg-red-500/10 flex items-center justify-center text-2xl mb-4" aria-hidden="true">\u26a0\ufe0f</div>' +
 							'<div class="text-xl font-semibold">Camera not supported</div>' +
 							'<p class="mt-2 text-sm text-white/60 max-w-xs">This browser cannot access the camera. Try Safari on iPad or Chrome on desktop.</p>' +
-							'<a href="' + basePath + '/kiosk" class="mt-6 inline-flex items-center justify-center rounded-full bg-cf-orange px-8 py-3 text-base font-bold text-black hover:bg-cf-orange-dark active:scale-[0.98] transition">\u2190 Back to start</a>'
+							'<a href="' + basePath + '" class="mt-6 inline-flex items-center justify-center rounded-full bg-cf-orange px-8 py-3 text-base font-bold text-black hover:bg-cf-orange-dark active:scale-[0.98] transition">\u2190 Back to start</a>'
 						);
 						return;
 					}
@@ -260,7 +260,7 @@ app.get('/kiosk/capture', (c) => {
 							(denied ? "We need camera access to take your selfie. Check your browser or device settings, then tap Retry." : "Make sure no other app is using the camera, then tap Retry.") +
 							'</p>' +
 							'<button id="cap-retry-perms" class="mt-6 inline-flex items-center justify-center rounded-full bg-cf-orange px-8 py-3 text-base font-bold text-black hover:bg-cf-orange-dark active:scale-[0.98] transition">Retry permissions</button>' +
-							'<a href="' + basePath + '/kiosk" class="mt-3 text-sm text-white/50 hover:text-white underline underline-offset-4">\u2190 Back to start</a>'
+							'<a href="' + basePath + '" class="mt-3 text-sm text-white/50 hover:text-white underline underline-offset-4">\u2190 Back to start</a>'
 						);
 						var retryPerms = document.getElementById("cap-retry-perms");
 						if (retryPerms) retryPerms.addEventListener("click", function () { startCamera(); });

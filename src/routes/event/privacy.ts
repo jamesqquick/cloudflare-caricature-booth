@@ -12,7 +12,7 @@ app.get('/privacy', async (c) => {
 		page(
 			`Privacy — ${event.name} Caricature Booth`,
 			`<header class="px-6 sm:px-8 py-6 flex items-center justify-between">
-				<a href="${basePath}/" class="flex items-center gap-2 text-sm uppercase tracking-widest text-white/60 hover:text-white transition">
+				<a href="${basePath}" class="flex items-center gap-2 text-sm uppercase tracking-widest text-white/60 hover:text-white transition">
 					<img src="/cloudflare-logo.png" alt="" class="h-5 w-5" />
 					<span>Cloudflare &middot; ${escapeAttr(event.name)}</span>
 				</a>

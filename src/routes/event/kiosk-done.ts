@@ -179,7 +179,7 @@ app.get('/kiosk/done', (c) => {
 					if (window.kioskIdleDialog) window.kioskIdleDialog.hide();
 					try { sessionStorage.removeItem("kiosk:selfie"); } catch (e) {}
 					try { sessionStorage.removeItem("kiosk:done"); } catch (e) {}
-					window.location.href = basePath + "/kiosk";
+					window.location.href = basePath;
 				}
 
 				var idleTimer = null;

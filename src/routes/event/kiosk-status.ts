@@ -24,7 +24,7 @@ app.get('/kiosk/status/:instanceId', async (c) => {
 				`<main class="min-h-[100dvh] w-full flex flex-col items-center justify-center px-8 text-center gap-6">
 					<div class="text-2xl font-semibold text-red-300">Missing session id</div>
 					<p class="text-sm text-white/60 max-w-md">This page can't track a postcard without ?session=&lt;id&gt;.</p>
-					<a href="${basePath}/kiosk" class="inline-flex items-center justify-center rounded-full bg-cf-orange px-10 py-4 text-base font-bold text-black hover:bg-cf-orange-dark transition">Start over</a>
+					<a href="${basePath}" class="inline-flex items-center justify-center rounded-full bg-cf-orange px-10 py-4 text-base font-bold text-black hover:bg-cf-orange-dark transition">Start over</a>
 				</main>`,
 			),
 			400,
@@ -171,7 +171,7 @@ app.get('/kiosk/status/:instanceId', async (c) => {
 				retryBtn.addEventListener("click", function () {
 					try { sessionStorage.removeItem("kiosk:selfie"); } catch (e) {}
 					try { sessionStorage.removeItem("kiosk:done"); } catch (e) {}
-					window.location.href = basePath + "/kiosk";
+					window.location.href = basePath;
 				});
 
 				let ws;

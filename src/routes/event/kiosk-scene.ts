@@ -20,7 +20,7 @@ app.get('/kiosk/scene', async (c) => {
 				`<main class="min-h-[100dvh] w-full flex flex-col items-center justify-center px-8 text-center">
 					<div class="text-2xl font-semibold text-red-300">Scenes unavailable</div>
 					<p class="mt-3 text-sm text-white/60 max-w-md">No active scenes found for this event.</p>
-					<a href="${basePath}/kiosk" class="mt-8 text-sm text-white/60 hover:text-white underline">← Back to start</a>
+					<a href="${basePath}" class="mt-8 text-sm text-white/60 hover:text-white underline">← Back to start</a>
 				</main>`,
 			),
 			500,

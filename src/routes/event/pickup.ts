@@ -38,7 +38,7 @@ app.get('/p/:id', async (c) => {
 							at the booth, double-check the QR on your printed postcard or ask a
 							staff member for help.
 						</p>
-						<a href="${basePath}/" class="mt-10 inline-block rounded-full bg-cf-orange px-6 py-3 text-sm font-semibold text-black hover:bg-cf-orange-dark transition">
+						<a href="${basePath}" class="mt-10 inline-block rounded-full bg-cf-orange px-6 py-3 text-sm font-semibold text-black hover:bg-cf-orange-dark transition">
 							See what we built
 						</a>
 					</div>
