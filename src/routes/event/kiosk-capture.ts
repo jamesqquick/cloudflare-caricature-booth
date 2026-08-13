@@ -5,10 +5,11 @@ import { kioskPage } from '../../lib/html';
 const app = new Hono<EventEnv>();
 
 /**
- * Live camera capture screen
+ * Live camera capture screen (step 2 of 2).
  * GET /kiosk/capture
  */
 app.get('/kiosk/capture', (c) => {
+	const eventId = c.get('eventCtx').event.id;
 	const basePath = c.get('basePath');
 	return c.html(
 		kioskPage(
@@ -61,7 +62,7 @@ app.get('/kiosk/capture', (c) => {
 								<span class="studio-shutter-label">Take photo</span>
 							</div>
 							<div id="cap-confirm-row" class="studio-confirm hidden flex-col">
-								<button id="cap-use" type="button" class="studio-use">Use this photo</button>
+								<button id="cap-use" type="button" class="studio-use">Generate</button>
 								<button id="cap-retake" type="button" class="studio-retake">Retake</button>
 							</div>
 							<p id="cap-status" class="studio-status" aria-live="polite"></p>
@@ -218,6 +219,17 @@ app.get('/kiosk/capture', (c) => {
 			<script>
 			(function () {
 				const basePath = ${JSON.stringify(basePath)};
+				const eventId = ${JSON.stringify(eventId)};
+				let selectedScene;
+				try {
+					selectedScene = JSON.parse(sessionStorage.getItem("kiosk:scene") || "null");
+					if (!selectedScene || selectedScene.eventId !== eventId || !selectedScene.sceneId) throw new Error("incomplete payload");
+				} catch (err) {
+					console.error("bad kiosk:scene payload:", err);
+					sessionStorage.removeItem("kiosk:scene");
+					window.location.replace(basePath);
+					return;
+				}
 				const video = document.getElementById("cap-video");
 				const preview = document.getElementById("cap-preview");
 				const overlay = document.getElementById("cap-overlay");
@@ -235,6 +247,7 @@ app.get('/kiosk/capture', (c) => {
 				let stream = null;
 				let capturedBlob = null;
 				let capturedUrl = null;
+				let uploadedSelfie = null;
 				let countdownTimer = null;
 				const countdownEl = document.getElementById("cap-countdown");
 				const countdownNum = document.getElementById("cap-countdown-num");
@@ -461,6 +474,7 @@ app.get('/kiosk/capture', (c) => {
 
 				async function retake() {
 					capturedBlob = null;
+					uploadedSelfie = null;
 					if (capturedUrl) { URL.revokeObjectURL(capturedUrl); capturedUrl = null; }
 					preview.classList.add("hidden");
 					video.classList.remove("hidden");
@@ -478,19 +492,30 @@ app.get('/kiosk/capture', (c) => {
 					retakeBtn.disabled = true;
 					statusEl.textContent = "Uploading…";
 					try {
-						const fd = new FormData();
-						fd.append("selfie", capturedBlob, "selfie.jpg");
-						const r = await fetch(basePath + "/api/kiosk/selfie", { method: "POST", body: fd });
-						const j = await r.json();
-						if (!r.ok || !j.ok) throw new Error(j.error || "upload failed");
-						sessionStorage.setItem("kiosk:selfie", JSON.stringify({
-							sessionId: j.sessionId,
-							selfieKey: j.selfieKey,
-							size: j.size,
-							capturedAt: Date.now(),
-						}));
-						statusEl.textContent = "✓ Uploaded. Pick a scene next…";
-						window.location.href = basePath + "/kiosk/scene";
+						if (!uploadedSelfie) {
+							const fd = new FormData();
+							fd.append("selfie", capturedBlob, "selfie.jpg");
+							const uploadResponse = await fetch(basePath + "/api/kiosk/selfie", { method: "POST", body: fd });
+							const uploadData = await uploadResponse.json();
+							if (!uploadResponse.ok || !uploadData.ok) throw new Error(uploadData.error || "upload failed");
+							uploadedSelfie = { sessionId: uploadData.sessionId, selfieKey: uploadData.selfieKey };
+						}
+
+						statusEl.textContent = "Starting generation…";
+						const startResponse = await fetch(basePath + "/api/kiosk/start", {
+							method: "POST",
+							headers: { "content-type": "application/json" },
+							body: JSON.stringify({
+								sessionId: uploadedSelfie.sessionId,
+								selfieKey: uploadedSelfie.selfieKey,
+								sceneId: selectedScene.sceneId,
+							}),
+						});
+						const startData = await startResponse.json();
+						if (!startResponse.ok || !startData.ok) throw new Error(startData.error || "start failed");
+						sessionStorage.removeItem("kiosk:scene");
+						sessionStorage.removeItem("kiosk:selfie");
+						window.location.href = startData.statusUrl;
 					} catch (err) {
 						console.error(err);
 						statusEl.textContent = "✗ " + (err && err.message ? err.message : String(err));

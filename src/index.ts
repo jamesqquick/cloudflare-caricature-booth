@@ -29,8 +29,6 @@ import { adminSessionDetailRoutes } from './routes/admin-session-detail';
 import { eventLandingRoutes } from './routes/event/landing';
 import { privacyRoutes } from './routes/event/privacy';
 import { kioskCaptureRoutes } from './routes/event/kiosk-capture';
-import { kioskSceneRoutes } from './routes/event/kiosk-scene';
-import { kioskReviewRoutes } from './routes/event/kiosk-review';
 import { kioskStatusRoutes } from './routes/event/kiosk-status';
 import { kioskDoneRoutes } from './routes/event/kiosk-done';
 import { kioskApiRoutes } from './routes/event/kiosk-api';
@@ -120,8 +118,6 @@ eventApp.use('*', async (c, next) => {
 eventApp.route('/', eventLandingRoutes);
 eventApp.route('/', privacyRoutes);
 eventApp.route('/', kioskCaptureRoutes);
-eventApp.route('/', kioskSceneRoutes);
-eventApp.route('/', kioskReviewRoutes);
 eventApp.route('/', kioskStatusRoutes);
 eventApp.route('/', kioskDoneRoutes);
 eventApp.route('/', kioskApiRoutes);
