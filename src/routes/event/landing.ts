@@ -12,13 +12,13 @@ app.get('/', async (c) => {
 	const { event } = c.get('eventCtx');
 	const basePath = c.get('basePath');
 	const origin = new URL(c.req.url).origin;
-	const eventUrl = `${origin}${basePath}/`;
-	const qrSrc = `${basePath}/api/kiosk/qr?url=${encodeURIComponent(eventUrl)}`;
+	const qrTarget = `${origin}${basePath}/kiosk`;
+	const qrSrc = `${basePath}/api/kiosk/qr?url=${encodeURIComponent(qrTarget)}`;
 	return c.html(
 		page(
 			`${event.name} — AI Caricature Booth`,
 			`			<div class="flex justify-center pt-4 sm:fixed sm:top-4 sm:left-4 sm:z-50 sm:pt-0 sm:block">
-				<img src="${qrSrc}" alt="QR code — scan to open this page"
+				<img src="${qrSrc}" alt="QR code — scan to start"
 					class="w-20 sm:w-24 rounded-xl border border-white/10 bg-white p-1.5" />
 			</div>
 			<main class="px-6 sm:px-8 pb-20">
@@ -46,16 +46,16 @@ app.get('/', async (c) => {
 					<ol class="grid sm:grid-cols-3 gap-4 sm:gap-6">
 						<li class="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
 							<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 01</div>
-							<div class="mt-3 text-lg font-semibold">Snap a selfie</div>
+							<div class="mt-3 text-lg font-semibold">Pick a scene</div>
 							<p class="mt-2 text-sm text-white/60">
-								Step up to the booth and take a photo. No app, no signup.
+								Choose your backdrop from the scene picker.
 							</p>
 						</li>
 						<li class="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
 							<div class="text-cf-orange font-mono text-xs tracking-widest">STEP 02</div>
-							<div class="mt-3 text-lg font-semibold">Pick a scene</div>
+							<div class="mt-3 text-lg font-semibold">Snap a selfie</div>
 							<p class="mt-2 text-sm text-white/60">
-								Choose your backdrop from the scene picker.
+								Take a photo, retake it if needed, then generate your postcard.
 							</p>
 						</li>
 						<li class="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
