@@ -14,6 +14,118 @@ import { escapeHtml, escapeAttr } from './html';
 export const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$/;
 
 // ---------------------------------------------------------------------------
+// Shared browser client
+// ---------------------------------------------------------------------------
+
+/** Inline client shared by admin pages that call protected admin APIs. */
+export function adminClientScript(): string {
+	return `<script>
+	(function () {
+		var imageObjectUrls = new Map();
+
+		function request(url, opts) {
+			var options = Object.assign({}, opts || {});
+			var headers = new Headers(options.headers);
+			headers.set("X-Requested-With", "XMLHttpRequest");
+			options.credentials = "same-origin";
+			options.headers = headers;
+			return fetch(url, options).then(function (response) {
+				if (response.status === 401) {
+					window.location.reload();
+					return new Promise(function () {});
+				}
+				return response;
+			});
+		}
+
+		function evictImage(source) {
+			var objectUrlPromise = imageObjectUrls.get(source);
+			if (!objectUrlPromise) return;
+			imageObjectUrls.delete(source);
+			objectUrlPromise.then(function (objectUrl) {
+				URL.revokeObjectURL(objectUrl);
+			}).catch(function () {});
+		}
+
+		function getImageObjectUrl(source) {
+			var existing = imageObjectUrls.get(source);
+			if (existing) return existing;
+			var objectUrlPromise = request(source).then(function (response) {
+				if (!response.ok) throw new Error("HTTP " + response.status);
+				return response.blob();
+			}).then(function (blob) {
+				return URL.createObjectURL(blob);
+			});
+			imageObjectUrls.set(source, objectUrlPromise);
+			objectUrlPromise.catch(function () {
+				if (imageObjectUrls.get(source) === objectUrlPromise) imageObjectUrls.delete(source);
+			});
+			return objectUrlPromise;
+		}
+
+		function evictUnusedImages() {
+			var activeSources = new Set();
+			var images = document.querySelectorAll("img[data-admin-src]");
+			for (var i = 0; i < images.length; i++) {
+				activeSources.add(images[i].getAttribute("data-admin-src"));
+			}
+			imageObjectUrls.forEach(function (_, source) {
+				if (!activeSources.has(source)) evictImage(source);
+			});
+		}
+
+		function loadImages(root) {
+			var images = (root || document).querySelectorAll("img[data-admin-src]");
+			for (var i = 0; i < images.length; i++) {
+				(function (img) {
+					var source = img.getAttribute("data-admin-src");
+					getImageObjectUrl(source).then(function (objectUrl) {
+						if (img.isConnected && img.getAttribute("data-admin-src") === source) img.src = objectUrl;
+					}).catch(function (err) {
+						console.error("[admin] image load failed:", err);
+					});
+				})(images[i]);
+			}
+			evictUnusedImages();
+		}
+
+		function download(url) {
+			return request(url).then(function (response) {
+				if (!response.ok) throw new Error("HTTP " + response.status);
+				var disposition = response.headers.get("content-disposition") || "";
+				var filename = /filename="([^"]+)"/.exec(disposition);
+				return response.blob().then(function (blob) {
+					return { blob: blob, filename: filename ? filename[1] : "caricature" };
+				});
+			}).then(function (file) {
+				var objectUrl = URL.createObjectURL(file.blob);
+				var link = document.createElement("a");
+				link.href = objectUrl;
+				link.download = file.filename;
+				document.body.appendChild(link);
+				link.click();
+				link.remove();
+				setTimeout(function () { URL.revokeObjectURL(objectUrl); }, 0);
+			});
+		}
+
+		window.addEventListener("pagehide", function () {
+			Array.from(imageObjectUrls.keys()).forEach(evictImage);
+		});
+		window.addEventListener("pageshow", function (event) {
+			if (event.persisted) loadImages(document);
+		});
+
+		window.CaricatureBoothAdmin = {
+			download: download,
+			loadImages: loadImages,
+			request: request,
+		};
+	})();
+	</script>`;
+}
+
+// ---------------------------------------------------------------------------
 // Status / pill helpers
 // ---------------------------------------------------------------------------
 
@@ -139,7 +251,7 @@ export function renderAdminCard(r: AdminSessionRow): string {
 	// Image or placeholder
 	let imageHtml: string;
 	if (isCompleted && r.postcardKey) {
-		imageHtml = `<img src="${escapeAttr(adminThumbUrl(r.postcardKey))}" alt="Postcard" loading="lazy" class="absolute inset-0 w-full h-full object-cover" />`;
+		imageHtml = `<img data-admin-src="${escapeAttr(adminThumbUrl(r.postcardKey))}" alt="Postcard" loading="lazy" class="absolute inset-0 w-full h-full object-cover" />`;
 	} else if (isErrored) {
 		imageHtml =
 			`<div class="absolute inset-0 flex flex-col items-center justify-center bg-red-500/10 px-4">` +
@@ -221,7 +333,7 @@ export function adminEventNav(crumbs: string = ''): string {
 		<div class="flex items-center gap-4 text-xs text-white/50">
 			<a href="/admin" class="text-cf-orange hover:text-white underline underline-offset-4">Dashboard</a>
 			<a href="/admin/events" class="text-cf-orange hover:text-white underline underline-offset-4">Events</a>
-			<a href="/admin/logout" class="text-cf-orange hover:text-white underline underline-offset-4">Sign out</a>
+			<a href="/cdn-cgi/access/logout" class="text-cf-orange hover:text-white underline underline-offset-4">Sign out</a>
 		</div>
 	</header>`;
 }

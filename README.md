@@ -119,7 +119,7 @@ migrations/                   — D1 schema migrations
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 22+
 - A Cloudflare account with the services listed above provisioned
 - A Replicate API token
 
@@ -129,7 +129,7 @@ migrations/                   — D1 schema migrations
 npm install
 ```
 
-Create a `.dev.vars` file in the project root with your secrets:
+Copy `.dev.vars.example` to `.dev.vars` and replace the placeholders:
 
 ```
 REPLICATE_API_TOKEN=your_token_here
@@ -191,7 +191,19 @@ Run `lpstat -p -d` to find the correct CUPS printer name if `DNP_DS620` doesn't 
 
 ## Admin dashboard
 
-Available at `/admin` (password-protected). Shows:
+Available at `/admin` and protected by Cloudflare Access. Production Access must
+cover these exact paths only:
+
+- `caricature-booth.examples.workers.dev/admin`
+- `caricature-booth.examples.workers.dev/admin/*`
+- `caricature-booth.examples.workers.dev/api/admin/*`
+
+Enable the separate Access Preview Worker application for the Worker so every
+Preview URL path requires authentication. Both applications should allow only
+the intended admin identity provider and users. If either Access application is
+recreated, update its audience in `wrangler.jsonc` and run `npm run cf-typegen`.
+
+The dashboard shows:
 
 - Stat cards: total sessions, completed, errored, avg pipeline time, prints
 - Live session table with per-row actions (retry print, resend email, delete)

@@ -4,6 +4,12 @@
 	"main": "src/index.ts",
 	"compatibility_date": "2025-10-01",
 	"account_id": "e9bc21da719562a3e45d77de7dd042de",
+	"vars": {
+		"CF_ACCESS_TEAM_DOMAIN": "https://cfcommunity.cloudflareaccess.com",
+		"CF_ACCESS_PRODUCTION_HOSTNAME": "caricature-booth.examples.workers.dev",
+		"CF_ACCESS_PRODUCTION_AUDIENCE": "292be3ae230ae9af25fec17ba866ca2a2eb7cc58e068c784178ab62750ae9bde",
+		"CF_ACCESS_PREVIEW_AUDIENCE": "d49e091f94c6a743ffe20a875ac654260cbc9b778b63a60b5e145be25262d79c"
+	},
 	"assets": {
 		"directory": "./public",
 		"binding": "ASSETS"
